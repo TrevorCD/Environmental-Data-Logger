@@ -32,39 +32,39 @@ This project implements a real-time environmental data logger using an STM32 Nuc
 
 ## Hardware Components
 ### NUCLEO-64 STM32F446RE EVAL BRD
-#### Description:
+**Description:**
 STM32 Nucleo-64 development board with STM32F446RE MCU  
-#### Manufacturer:
+**Manufacturer:**
 STMicroelectronics  
-#### Product Number:
+**Product Number:**
 NUCLEO-F446RE  
-#### Voltage:
+**Voltage:**
 VDD 1.7V - 3.6V, VDDIO 1.7V-3.6V  
-#### Interface:
+**Interface:**
 GPIO, I2C, SPI, UART  
 
 ### BME680-BREAKOUT BOARD
-#### Description:
+**Description:**
 Humidity, pressure, temperature and air quality sensor  
-#### Manufacturer:
+**Manufacturer:**
 Watterott Electronic GmbH  
-#### Product Number:
+**Product Number:**
 201878  
-#### Voltage:
+**Voltage:**
 VDD 1.71V - 3.6V, VDDIO 1.2V - 3.6V  
-#### Interface:
+**Interface:**
 I2C, SPI  
 
 ### MICROSD SPI/SPIO BREAKOUT BOARD
-#### Description:
+**Description:**
 Breakout board connects microSD slot to pins for SPI/SPIO  
-#### Manufacturer:
+**Manufacturer:**
 Adafruit Industries LLC  
-#### Product Number:
+**Product Number:**
 4682  
-#### Voltage:
+**Voltage:**
 VDD 3.3V (delicate)  
-#### Interface:
+**Interface:**
 SPI, SPIO  
 
 ## Main Challenges:
@@ -77,31 +77,31 @@ SPI, SPIO
 - Handling timing constraints and RTOS behavior
 
 ##  Dependencies
-FreeRTOS v202406.01-LTS  
+**FreeRTOS** v202406.01-LTS  
 Real-time operating system for tasks, queues, and synchronization
 
-FatFS R0.16  
+**FatFS** R0.16  
 File system library providing FAT32 support for SD card storage
 
-STM32CubeF4 1.28.3  
+**STM32CubeF4** 1.28.3  
 STM32 configuration tool for initializing peripherals and middleware
 
-STM32 HAL drivers v1.8.5  
+**STM32 HAL drivers** v1.8.5  
 Vendor-provided abstraction layer for configuring and controlling MCU peripherals
 
 ##  FreeRTOS Task Layout:
-- Environmental Sensor Task
+- **Environmental Sensor Task**
   - Waits on a binary semaphore that is given by the ISR when new data is ready
   - Reads sensor via I²C when semaphore is given
   - Push data onto queue
-- Data Logger Task
+- **Data Logger Task**
   - Waits on a queue of sensor readings from the sensor task
   - Pops data off queue
   - Write data to the SD card
-- Interrupt Handler
+- **Interrupt Handler**
   - Triggered by sensor’s “data ready” pin
   - Gives the semaphore to the sensor task 
-- Serial Comm Task
+- **Serial Comm Task**
   - Print readings to serial console for debugging
   - Triggered by Data Logger Task when data popped off queue
 
