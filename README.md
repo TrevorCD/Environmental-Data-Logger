@@ -33,12 +33,11 @@ Hone existing skills:
 
 ## Hardware Components
 ### NUCLEO-64 STM32F446RE EVAL BRD
-Description:		STM32 Nucleo-64 development board with STM32F446RE MCU
-Manufacturer: 	STMicroelectronics
-Product Number:	NUCLEO-F446RE
-Documentation:	Product Page     Datasheet     Databrief     Website
-Voltage:		    VDD 1.7V - 3.6V		VDDIO 1.7V-3.6V
-Interface:		  GPIO, I2C, SPI, UART
+Description:		STM32 Nucleo-64 development board with STM32F446RE MCU  
+Manufacturer: 	STMicroelectronics  
+Product Number:	NUCLEO-F446RE  
+Voltage:		    VDD 1.7V - 3.6V		VDDIO 1.7V-3.6V  
+Interface:		  GPIO, I2C, SPI, UART  
 
 ### BME680-BREAKOUT BOARD
 Description:		Humidity, pressure, temperature and air quality sensor
