@@ -21,6 +21,7 @@ Gain fundamental embedded SWE skills:
 - STM32 microcontroller development and configuration
 - Communication protocols: I2C, SPI
 - RTOS development: scheduling, tasks, and queues
+
 Hone existing skills:
 - Device driver development
 - Datasheet comprehension
