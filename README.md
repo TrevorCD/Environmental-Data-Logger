@@ -33,11 +33,16 @@ Hone existing skills:
 
 ## Hardware Components
 ### NUCLEO-64 STM32F446RE EVAL BRD
-Description:		STM32 Nucleo-64 development board with STM32F446RE MCU  
-Manufacturer: 	STMicroelectronics  
-Product Number:	NUCLEO-F446RE  
-Voltage:		    VDD 1.7V - 3.6V		VDDIO 1.7V-3.6V  
-Interface:		  GPIO, I2C, SPI, UART  
+Description:
+STM32 Nucleo-64 development board with STM32F446RE MCU  
+Manufacturer:
+STMicroelectronics  
+Product Number:
+NUCLEO-F446RE  
+Voltage:
+VDD 1.7V - 3.6V		VDDIO 1.7V-3.6V  
+Interface:
+GPIO, I2C, SPI, UART  
 
 ### BME680-BREAKOUT BOARD
 Description:		Humidity, pressure, temperature and air quality sensor  
@@ -81,13 +86,13 @@ Vendor-provided abstraction layer for configuring and controlling MCU peripheral
   - Reads sensor via I²C when semaphore is given
   - Push data onto queue
 - Data Logger Task
-  - Waits on a queue of sensor readings from the sensor task.
+  - Waits on a queue of sensor readings from the sensor task
   - Pops data off queue
-  - Write data to the SD card.
+  - Write data to the SD card
 - Interrupt Handler
-  - Triggered by sensor’s “data ready” pin.
+  - Triggered by sensor’s “data ready” pin
   - Gives the semaphore to the sensor task 
 - Serial Comm Task
   - Print readings to serial console for debugging
-  - Triggered by ISR or Sensor (not sure yet)
+  - Triggered by Data Logger Task when data popped off queue
 
