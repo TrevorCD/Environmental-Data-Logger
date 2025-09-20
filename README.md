@@ -38,12 +38,12 @@ STM32 Nucleo-64 development board with STM32F446RE MCU
 STMicroelectronics  
 **Product Number:**
 NUCLEO-F446RE  
-**Documentation:**
-[Product Page](https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-F446RE/5347712)    [Datasheet](https://www.st.com/content/ccc/resource/technical/document/datasheet/65/cb/75/50/53/d6/48/24/DM00141306.pdf/files/DM00141306.pdf/jcr:content/translations/en.DM00141306.pdf)    [Databrief](https://www.st.com/content/ccc/resource/technical/document/data_brief/c8/3c/30/f7/d6/08/4a/26/DM00105918.pdf/files/DM00105918.pdf/jcr:content/translations/en.DM00105918.pdf)    [Website](https://www.st.com/en/evaluation-tools/nucleo-f446re.html?ecmp=tt9470_gl_link_feb2019&rt=db&id=DB2196#overview)  
 **Voltage:**
 VDD 1.7V - 3.6V, VDDIO 1.7V-3.6V  
 **Interface:**
 GPIO, I2C, SPI, UART  
+**Documentation:**
+[Product Page](https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-F446RE/5347712)    [Datasheet](https://www.st.com/content/ccc/resource/technical/document/datasheet/65/cb/75/50/53/d6/48/24/DM00141306.pdf/files/DM00141306.pdf/jcr:content/translations/en.DM00141306.pdf)    [Databrief](https://www.st.com/content/ccc/resource/technical/document/data_brief/c8/3c/30/f7/d6/08/4a/26/DM00105918.pdf/files/DM00105918.pdf/jcr:content/translations/en.DM00105918.pdf)    [Website](https://www.st.com/en/evaluation-tools/nucleo-f446re.html?ecmp=tt9470_gl_link_feb2019&rt=db&id=DB2196#overview)  
 
 ### BME680-BREAKOUT BOARD
 **Description:**
@@ -52,12 +52,12 @@ Humidity, pressure, temperature and air quality sensor
 Watterott Electronic GmbH  
 **Product Number:**
 201878  
-**Documentation:**
-[Product Page](https://www.digikey.com/en/products/detail/watterott-electronic-gmbh/201878/10071156)    [Datasheet](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme680-ds001.pdf)    [Databrief](https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/567/201878_Web.pdf)  
 **Voltage:**
 VDD 1.71V - 3.6V, VDDIO 1.2V - 3.6V  
 **Interface:**
 I2C, SPI  
+**Documentation:**
+[Product Page](https://www.digikey.com/en/products/detail/watterott-electronic-gmbh/201878/10071156)    [Datasheet](https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bme680-ds001.pdf)    [Databrief](https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/567/201878_Web.pdf)  
 
 ### MICROSD SPI/SPIO BREAKOUT BOARD
 **Description:**
@@ -66,12 +66,12 @@ Breakout board connects microSD slot to pins for SPI/SPIO
 Adafruit Industries LLC  
 **Product Number:**
 4682  
-**Documentation:**
-[Product Page](https://www.digikey.com/en/products/detail/adafruit-industries-llc/4682/12822319)    [Datasheet](https://cdn-learn.adafruit.com/downloads/pdf/adafruit-microsd-spi-sdio.pdf)  
 **Voltage:**
 VDD 3.3V (delicate)  
 **Interface:**
 SPI, SPIO  
+**Documentation:**
+[Product Page](https://www.digikey.com/en/products/detail/adafruit-industries-llc/4682/12822319)    [Datasheet](https://cdn-learn.adafruit.com/downloads/pdf/adafruit-microsd-spi-sdio.pdf)  
 
 ## Main Challenges:
 - Writing an I²C device driver for BME680 -> Understanding datasheet, I2C Setup and Protocol
