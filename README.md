@@ -40,20 +40,18 @@ Voltage:		    VDD 1.7V - 3.6V		VDDIO 1.7V-3.6V
 Interface:		  GPIO, I2C, SPI, UART  
 
 ### BME680-BREAKOUT BOARD
-Description:		Humidity, pressure, temperature and air quality sensor
-Manufacturer: 	Watterott Electronic GmbH
-Product Number:	201878
-Documentation:	Product Page     Datasheet     Databrief
-Voltage:		    VDD 1.71V - 3.6V	VDDIO 1.2V - 3.6V
-Interface:		  I2C, SPI
+Description:		Humidity, pressure, temperature and air quality sensor  
+Manufacturer: 	Watterott Electronic GmbH  
+Product Number:	201878  
+Voltage:		    VDD 1.71V - 3.6V	VDDIO 1.2V - 3.6V  
+Interface:		  I2C, SPI  
 
 ### MICROSD SPI/SPIO BREAKOUT BOARD
-Description:		Breakout board connects microSD slot to pins for SPI/SPIO
-Manufacturer: 	Adafruit Industries LLC
-Product Number:	4682
-Documentation:	Product Page     Datasheet
-Voltage:		    VDD 3.3V (delicate)
-Interface:		  SPI, SPIO
+Description:		Breakout board connects microSD slot to pins for SPI/SPIO  
+Manufacturer: 	Adafruit Industries LLC  
+Product Number:	4682  
+Voltage:		    VDD 3.3V (delicate)  
+Interface:		  SPI, SPIO  
 
 ## Main Challenges:
 - Writing an I²C device driver for BME680 -> Understanding datasheet, I2C Setup and Protocol
@@ -65,16 +63,16 @@ Interface:		  SPI, SPIO
 - Handling timing constraints and RTOS behavior
 
 ##  Dependencies
-FreeRTOS v202406.01-LTS
+FreeRTOS v202406.01-LTS  
 Real-time operating system for tasks, queues, and synchronization
 
-FatFS R0.16
+FatFS R0.16  
 File system library providing FAT32 support for SD card storage
 
-STM32CubeF4 1.28.3
+STM32CubeF4 1.28.3  
 STM32 configuration tool for initializing peripherals and middleware
 
-STM32 HAL drivers v1.8.5
+STM32 HAL drivers v1.8.5  
 Vendor-provided abstraction layer for configuring and controlling MCU peripherals
 
 ##  FreeRTOS Task Layout:
