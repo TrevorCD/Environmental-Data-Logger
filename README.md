@@ -17,46 +17,55 @@ This project implements a real-time environmental data logger using an STM32 Nuc
 - Managing embedded data storage in CSV format.
 
 ## Goals
-Gain fundamental embedded SWE skills: 
-- STM32 microcontroller development and configuration
-- Communication protocols: I2C, SPI
-- RTOS development: scheduling, tasks, and queues
-
-Hone existing skills:
-- Device driver development
-- Datasheet comprehension
-- Hardware/software debugging
-- Embedded C programming
-- Interrupt handling
-- UART communication protocol
-- Technical documentation
+- Gain fundamental embedded SWE skills: 
+  - STM32 microcontroller development and configuration
+  - Communication protocols: I2C, SPI
+  - RTOS development: scheduling, tasks, and queues
+- Hone existing skills:
+  - Device driver development
+  - Datasheet comprehension
+  - Hardware/software debugging
+  - Embedded C programming
+  - Interrupt handling
+  - UART communication protocol
+  - Technical documentation
 
 ## Hardware Components
 ### NUCLEO-64 STM32F446RE EVAL BRD
-Description:
+#### Description:
 STM32 Nucleo-64 development board with STM32F446RE MCU  
-Manufacturer:
+#### Manufacturer:
 STMicroelectronics  
-Product Number:
+#### Product Number:
 NUCLEO-F446RE  
-Voltage:
-VDD 1.7V - 3.6V		VDDIO 1.7V-3.6V  
-Interface:
+#### Voltage:
+VDD 1.7V - 3.6V, VDDIO 1.7V-3.6V  
+#### Interface:
 GPIO, I2C, SPI, UART  
 
 ### BME680-BREAKOUT BOARD
-Description:		Humidity, pressure, temperature and air quality sensor  
-Manufacturer: 	Watterott Electronic GmbH  
-Product Number:	201878  
-Voltage:		    VDD 1.71V - 3.6V	VDDIO 1.2V - 3.6V  
-Interface:		  I2C, SPI  
+#### Description:
+Humidity, pressure, temperature and air quality sensor  
+#### Manufacturer:
+Watterott Electronic GmbH  
+#### Product Number:
+201878  
+#### Voltage:
+VDD 1.71V - 3.6V, VDDIO 1.2V - 3.6V  
+#### Interface:
+I2C, SPI  
 
 ### MICROSD SPI/SPIO BREAKOUT BOARD
-Description:		Breakout board connects microSD slot to pins for SPI/SPIO  
-Manufacturer: 	Adafruit Industries LLC  
-Product Number:	4682  
-Voltage:		    VDD 3.3V (delicate)  
-Interface:		  SPI, SPIO  
+#### Description:
+Breakout board connects microSD slot to pins for SPI/SPIO  
+#### Manufacturer:
+Adafruit Industries LLC  
+#### Product Number:
+4682  
+#### Voltage:
+VDD 3.3V (delicate)  
+#### Interface:
+SPI, SPIO  
 
 ## Main Challenges:
 - Writing an I²C device driver for BME680 -> Understanding datasheet, I2C Setup and Protocol
