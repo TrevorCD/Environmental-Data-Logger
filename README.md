@@ -27,7 +27,7 @@ This project implements a real-time environmental data logger using an STM32 Nuc
   - Hardware/software debugging
   - Embedded C programming
   - Interrupt handling
-  - UART communication protocol
+  - UART communication
   - Technical documentation
 
 ## Hardware Components
@@ -74,9 +74,9 @@ SPI, SPIO
 [Product Page](https://www.digikey.com/en/products/detail/adafruit-industries-llc/4682/12822319)    [Datasheet](https://cdn-learn.adafruit.com/downloads/pdf/adafruit-microsd-spi-sdio.pdf)  
 
 ## Main Challenges:
-- Writing an I²C device driver for BME680 -> Understanding datasheet, I2C Setup and Protocol
-- Using SPI for SD card communication -> SPI Hardware Setup and Protocol
-- Interrupts: need to configure EXTI + ISR + proper task signaling
+- Writing an I²C device driver for BME680
+- Using SPI for SD card communication=
+- ISR: need to configure EXTI, set up proper task signaling
 - Synchronize with queues and deal with blocking file I/O
 - Designing clean task flow architecture
 - Power management: Set CPU sleep modes between interrupts
@@ -104,10 +104,13 @@ Vendor-provided abstraction layer for STM32 Boards
   - Waits on a queue of sensor readings from the sensor task
   - Pops data off queue
   - Write data to the SD card
+  - Push data onto queue 2
 - **Interrupt Handler**
   - Triggered by sensor’s “data ready” pin
   - Gives the semaphore to the sensor task
 - **Serial Comm Task**
+  - Waits on queue 2 of sensor readings from the data logger task
+  - Pops data off queue 2
   - Print readings to serial console for debugging
   - Triggered by Data Logger Task when data popped off queue
 
