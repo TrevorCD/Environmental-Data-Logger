@@ -1,6 +1,8 @@
 # Environmental-Data-Logger
 
 ## Overview
+
+### Description
 This project implements a real-time environmental data logger using an STM32 Nucleo-F446RE microcontroller, a BME680 environmental sensor, and a microSD card for storage. The system runs on FreeRTOS, featuring a custom I²C driver for the BME680.
 
 ### Key Features
