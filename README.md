@@ -11,29 +11,6 @@ This project implements a real-time environmental data logger using an STM32 Nuc
 - **Separation of Concerns:** Device driver, SD card interface, and RTOS tasks are cleanly separated.
 - **UART Monitoring:** Optional task to send sensor readings over USB for debugging and analysis.
 
-### Goals
-- Gain fundamental embedded SWE skills: 
-  - STM32 microcontroller development and configuration
-  - Communication protocols: I2C, SPI
-  - RTOS development: scheduling, tasks, and queues
-- Hone existing skills:
-  - Device driver development
-  - Datasheet comprehension
-  - Hardware/software debugging
-  - Embedded C programming
-  - Interrupt handling
-  - UART communication
-  - Technical documentation
- 
-### Main Challenges:
-- Writing an I²C device driver for BME680
-- Using SPI for SD card communication=
-- ISR: need to configure EXTI, set up proper task signaling
-- Synchronize with queues and deal with blocking file I/O
-- Designing clean task flow architecture
-- Power management: Set CPU sleep modes between interrupts
-- Handling timing constraints and RTOS behavior
-
 ## Hardware Components
 ### NUCLEO-64 STM32F446RE EVAL BRD
 **Description:**
