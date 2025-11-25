@@ -43,7 +43,7 @@ CFLAGS += -O2 -g -std=c99
 # General Include directories
 CFLAGS += -I. -Iinclude
 
-SRCS += src/stubs.c
+SRCS += src/main.c src/stubs.c
 
 # Linker flags
 LDFLAGS += -T $(FLASH_SCRIPT) -nostartfiles -Wl,--gc-sections
@@ -113,35 +113,6 @@ SRCS += $(KERNEL_DIR)/tasks.c \
 # FreeRTOS kernel header include directories
 CFLAGS += -I$(KERNEL_DIR)/include \
           -I$(KERNEL_DIR)/portable/GCC/ARM_CM4F
-
-
-#==================================#
-#  FreeRTOS Demo File Compilation  #
-#==================================#
-
-# Path to FreeRTOS Common Demo files. Should have Minimal/ and include/ subdirs
-DEMO_COMMON := $(FREERTOS_ROOT)/Demo/Common
-
-# Demo header include directories
-CFLAGS += -I$(DEMO_COMMON)/include
-
-# Demo source files (flash.c modified from Minimal/flash.c)
-SRCS += src/main.c \
-        src/partest.c \
-        src/flash.c \
-        $(DEMO_COMMON)/Minimal/flop.c \
-        $(DEMO_COMMON)/Minimal/integer.c \
-        $(DEMO_COMMON)/Minimal/PollQ.c \
-        $(DEMO_COMMON)/Minimal/semtest.c \
-        $(DEMO_COMMON)/Minimal/dynamic.c \
-        $(DEMO_COMMON)/Minimal/BlockQ.c \
-        $(DEMO_COMMON)/Minimal/blocktim.c \
-        $(DEMO_COMMON)/Minimal/countsem.c \
-        $(DEMO_COMMON)/Minimal/GenQTest.c \
-        $(DEMO_COMMON)/Minimal/recmutex.c \
-        $(DEMO_COMMON)/Minimal/death.c 
-
-ASM_SRCS += src/RegTest.s
 
 
 #----------------------------------[ Targets ]----------------------------------
