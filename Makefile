@@ -158,9 +158,8 @@ flash: main.elf
 clean:
 	rm -f $(OBJS) main.elf main.bin
 
-debug:
-	openocd -f interface/stlink.cfg -f target/stm32f4x.cfg &
-	arm-none-eabi-gdb main.elf
+ocd:
+	openocd -f openocd.cfg
 
 gdb:
 	arm-none-eabi-gdb main.elf
