@@ -43,10 +43,10 @@ CFLAGS += -O2 -g -std=c99
 # General Include directories
 CFLAGS += -I. -Iinclude
 
-SRCS += src/main.c src/stubs.c
+SRCS += src/main.c src/stubs.c src/itm.c src/syscalls.c
 
 # Linker flags
-LDFLAGS += -T $(FLASH_SCRIPT) -nostartfiles -Wl,--gc-sections
+LDFLAGS += -T $(FLASH_SCRIPT) -nostartfiles -Wl,--gc-sections -specs=nano.specs
 
 # ASM files not included in OBJS. Prevents 'make clean' from deleting .s files.
 OBJS = $(SRCS:.c=.o)

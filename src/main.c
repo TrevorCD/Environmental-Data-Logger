@@ -36,12 +36,13 @@
 #include "stm32f4xx_nucleo.h"
 #include "system_stm32f4xx.h"
 
+#include <stdio.h> /* for printf. _write is overwritten */
+#include "itm.h"
 /* A block time of zero simply means "don't block". */
 #define mainDONT_BLOCK                             ( 0UL )
 
 /*-------------------------------[ Prototypes ]-------------------------------*/
 
-static void setupITM(void);
 static void prvSetupHardware( void );
 static void SystemClock_Config(void);
 static void Error_Handler(void);
@@ -54,22 +55,20 @@ int main( void )
 {
     /* Configure the hardware ready to run the test. */
     prvSetupHardware();
-	setupITM();
+	ITM_Init();
 
+    for(;;)
+    {
+		printf("hello\n");
+    }
 	
     /* Start the scheduler. */
     vTaskStartScheduler();
 	
-    for( ; ; )
+    for(;;)
     {
+		printf("hello\n");
     }
-}
-
-
-static void setupITM(void)
-{
-	ITM->TCR = ITM_TCR_ITMENA_Msk | ITM_TCR_SWOENA_Msk;
-	ITM->TER = 1 << 0;  // enable port 0
 }
 
 static void prvSetupHardware( void )
