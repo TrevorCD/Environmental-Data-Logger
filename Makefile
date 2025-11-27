@@ -130,6 +130,10 @@ clean:
 	rm -f $(OBJS) main.elf main.bin
 
 ocd:
+	rm -f ocd.log.old
+	touch ocd.log
+	mv ocd.log ocd.log.old
+	touch ocd.log
 	openocd -f openocd.cfg
 
 gdb:
