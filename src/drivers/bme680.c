@@ -78,6 +78,7 @@
 #define PAR_H1_LSB     (0xE2U) /* <3:0> */
 #define PAR_H1_MSB     (0xE3U)
 #define PAR_H2_LSB     (0xE2U) /* <7:4> */
+#define PAR_H2_MSB     (0xE1U)
 #define PAR_H3         (0xE4U)
 #define PAR_H4         (0xE5U)
 #define PAR_H5         (0xE6U)
@@ -254,7 +255,7 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 		}
 
 	/* 100 ms delay to wait for heat up duration */
-	HAL_DELAY(100);
+	HAL_Delay(100);
 	
 	/* wait for new data */
 	while((eas_status = BME680_Data_Ready(dev)) != 1)
@@ -268,19 +269,19 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 		}
 
 	/* process data from BME680 output registers and move to output struct */
-	if(BME_Get_Temp(dev, &temp) != 0)
+	if(BME680_Get_Temp(dev) != 0)
 		{
 			return -1;
 		}
-	if(BME_Get_Press(dev, &press) != 0)
+	if(BME680_Get_Press(dev) != 0)
 		{
 			return -1;
 		}
-	if(BME_Get_Hum(dev, &hum) != 0)
+	if(BME680_Get_Hum(dev) != 0)
 		{
 			return -1;
 		}
-	if(BME_Get_Gas_R(dev, &gas_r) != 0)
+	if(BME680_Get_Gas_R(dev) != 0)
 		{
 			return -1;
 		}
@@ -326,7 +327,7 @@ static int BME680_Get_Hum(BME680_HandleTypeDef *dev)
 	var6 = (var4 * var5) >> 1;
 	hum_comp = (((var3 + var6) >> 10) * ((int32_t) 1000)) >> 12;
 
-	dev->output->humidity = hum_comp;
+	dev->output.humidity = hum_comp;
 	
 	return 0;
 }
@@ -335,7 +336,6 @@ static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 {
 	uint8_t msb, lsb, gas_range, range_switching_error;
 	uint16_t gas_adc; /* raw gas resistance value */
-	int32_t gas_res;
 	
 	/* get bits <9:2> of gas_adc from GAS_R_MSB<7:0> */
 	if(BME680_Read(dev, GAS_R_MSB, &msb) != 0)
@@ -386,6 +386,7 @@ static int BME680_Get_Press(BME680_HandleTypeDef *dev)
 {
 	uint32_t press_adc; /* raw pressure output data */
 	int32_t var1, var2, var3, press_comp;
+	uint8_t msb, lsb, xlsb;
 	
 	/* read MSB, LSB, XLSB for pressure */
 	if(BME680_Read(dev, PRESS_MSB, &msb) != 0)
@@ -405,9 +406,9 @@ static int BME680_Get_Press(BME680_HandleTypeDef *dev)
 		}
 	
 	/* construct press_adc from msb lsb and xlsb */
-	press_adc = ((uint32_t)press_msb << 12)
-	  	      | ((uint32_t)press_lsb << 4)
-		      | ((uint32_t)press_xlsb >> 4);
+	press_adc = ((uint32_t)msb << 12)
+	  	      | ((uint32_t)lsb << 4)
+		      | ((uint32_t)xlsb >> 4);
 	
 	/* following code is from BME680 datasheet page 18/19 */
 	var1 = ((int32_t)dev->t_fine >> 1) - 64000;
@@ -432,7 +433,7 @@ static int BME680_Get_Press(BME680_HandleTypeDef *dev)
 	var3 = ((int32_t)(press_comp >> 8) * (int32_t)(press_comp >> 8) *
 			(int32_t)(press_comp >> 8) * (int32_t)dev->calib.par_p10) >> 17;
 	press_comp = (int32_t)(press_comp) +
-	     	     ((var1+ var2 + var3 + ((int32_t)par_p7 << 7)) >> 4);
+	     	     ((var1+ var2 + var3 + ((int32_t)dev->calib.par_p7 << 7)) >> 4);
 	/* what */
 	dev->output.pressure = press_comp;
 	
@@ -463,9 +464,9 @@ static int BME680_Get_Temp(BME680_HandleTypeDef *dev)
 		}
 	
 	/* construct temp_adc from msb lsb and xlsb */
-	temp_adc = ((uint32_t)temp_msb << 12)
-		     | ((uint32_t)temp_lsb << 4)
-		     | ((uint32_t)temp_xlsb >> 4);
+	temp_adc = ((uint32_t)msb << 12)
+		     | ((uint32_t)lsb << 4)
+		     | ((uint32_t)xlsb >> 4);
 	
 	/* Following code is from the BME680 Datasheet page 17 */
 	var1 = ((int32_t)temp_adc >> 3) - ((int32_t)dev->calib.par_t1 << 1);
@@ -517,11 +518,12 @@ static int BME680_Read_2(BME680_HandleTypeDef *dev, uint8_t msb, uint8_t lsb,
 {
 	uint8_t temp;
 	
-	if(HAL_I2C_Mem_Read(dev->hi2c, SLAVE_ADDR, lsb, 1, data, 1, READ_TIMEOUT)
+	if(HAL_I2C_Mem_Read(dev->hi2c, SLAVE_ADDR, lsb, 1, &temp, 1, READ_TIMEOUT)
 	   != HAL_OK)
 		{
 			return -1;
 		}
+	*data = ((uint16_t)temp);
 	if(HAL_I2C_Mem_Read(dev->hi2c, SLAVE_ADDR, msb, 1, &temp, 1, READ_TIMEOUT)
 	   != HAL_OK)
 		{
