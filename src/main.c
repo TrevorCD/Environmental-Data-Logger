@@ -38,25 +38,31 @@
 
 #include <stdio.h> /* for printf. _write is overwritten */
 #include "itm.h"
+#include "bme680.h"
+
 /* A block time of zero simply means "don't block". */
-#define mainDONT_BLOCK                             ( 0UL )
+#define mainDONT_BLOCK                             (0UL)
 
 /*-------------------------------[ Prototypes ]-------------------------------*/
 
-static void prvSetupHardware( void );
+static void prvSetupHardware(void);
 static void SystemClock_Config(void);
 static void Error_Handler(void);
-
+static int  prvSetupBME680(BME680_HandleTypeDef *dev, I2C_TypeDef *instance);
 /*--------------------------------[ Globals ]---------------------------------*/
 
 /*-------------------------------[ Functions ]--------------------------------*/
 
-int main( void )
+int main(void)
 {
     /* Configure the hardware ready to run the test. */
     prvSetupHardware();
 	ITM_Init();
 
+	BME680_HandleTypeDef hbme = {0};
+	
+	prvSetupBME680(&hbme, I2C1);
+	
     for(;;)
     {
 		printf("hello\n");
@@ -71,22 +77,59 @@ int main( void )
     }
 }
 
-static void prvSetupHardware( void )
+static void prvSetupHardware(void)
 {
     /* Setup STM32 system (HAL, Clock) */
 	HAL_Init();
 	SystemClock_Config();
 	
     /* Ensure all priority bits are assigned as preemption priority bits. */
-    NVIC_SetPriorityGrouping( NVIC_PRIORITYGROUP_4 );
+    NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 }
 
-void vApplicationTickHook( void )
+static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_TypeDef *instance)
+{
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
+	
+	/* Enable clocks */
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_I2C1_CLK_ENABLE();
+	
+	/* Configure HAL GPIO Init structure */
+	GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_8;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP; /* Remove if using external pullup */
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
+	
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+	
+	/* Configure HAL I2C Init structure */
+	dev->hi2c.Instance = instance;
+	dev->hi2c.Init.ClockSpeed = 100000;
+	dev->hi2c.Init.DutyCycle = I2C_DUTYCYCLE_2;
+	dev->hi2c.Init.OwnAddress1 = 0;
+	dev->hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+	dev->hi2c.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+	dev->hi2c.Init.OwnAddress2 = 0;
+	dev->hi2c.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+	dev->hi2c.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+	
+	if(HAL_I2C_Init(&dev->hi2c) != HAL_OK)
+		{
+			printf("HAL I2C INIT FAIL!\n");
+			return -1;
+		}
+	
+	return BME680_Init(dev);
+}
+
+void vApplicationTickHook(void)
 {
 
 }
 
-void vApplicationMallocFailedHook( void )
+void vApplicationMallocFailedHook(void)
 {
 	/* Hook function that will get called if a call to pvPortMalloc() fails.
      * pvPortMalloc() is called internally by the kernel whenever a task, queue,
@@ -98,12 +141,12 @@ void vApplicationMallocFailedHook( void )
      * provide information on how the remaining heap might be fragmented). */
     taskDISABLE_INTERRUPTS();
 
-    for( ; ; )
+    for(; ;)
     {
     }
 }
 
-void vApplicationIdleHook( void )
+void vApplicationIdleHook(void)
 {
     /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
      * to 1 in FreeRTOSConfig.h. It will be called on each iteration of the idle
@@ -117,18 +160,18 @@ void vApplicationIdleHook( void )
 	 * deleted. */
 }
 
-void vApplicationStackOverflowHook( TaskHandle_t pxTask,
-                                    char * pcTaskName )
+void vApplicationStackOverflowHook(TaskHandle_t pxTask,
+                                    char * pcTaskName)
 {
-    ( void ) pcTaskName;
-    ( void ) pxTask;
+    (void) pcTaskName;
+    (void) pxTask;
 
     /* Run time stack overflow checking is performed if
      * configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
      * function is called if a stack overflow is detected. */
     taskDISABLE_INTERRUPTS();
 
-    for( ; ; )
+    for(; ;)
     {
     }
 }

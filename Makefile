@@ -115,6 +115,13 @@ CFLAGS += -I$(KERNEL_DIR)/include \
           -I$(KERNEL_DIR)/portable/GCC/ARM_CM4F
 
 
+#==================================#
+#       BME680 Device Driver       #
+#==================================#
+
+SRCS += src/drivers/bme680.c
+CFLAGS += -I./include/drivers
+
 #----------------------------------[ Targets ]----------------------------------
 
 all: main.elf
