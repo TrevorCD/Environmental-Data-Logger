@@ -31,10 +31,10 @@
 #include "stm32f4xx_hal_i2c.h"
 
 typedef struct {
-	uint16_t humidity;
-	uint16_t temperature;
-	uint16_t pressure;
-	uint16_t gas_resistance;
+	int32_t humidity;
+	int32_t temperature;
+	int32_t pressure;
+	int32_t gas_resistance;
 } BME680_OutputTypeDef;
 
 typedef struct {
@@ -77,6 +77,9 @@ typedef struct {
 	int32_t amb_temp;
 	int32_t target_temp;
 
+	/*  */
+	int32_t t_fine;
+	
 	/*  */
 	uint8_t res_heat_0;
 	

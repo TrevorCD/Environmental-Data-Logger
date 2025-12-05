@@ -97,6 +97,10 @@ static int BME680_Transmit(BME680_HandleTypeDef *dev, uint8_t reg, uint8_t data)
 static int BME680_Data_Ready(BME680_HandleTypeDef *dev);
 static int BME680_Calc_Res_Heat(BME680_HandleTypeDef *dev);
 static int BME680_Get_Calibration(BME680_HandleTypeDef *dev);
+static int BME680_Get_Temp(BME680_HandleTypeDef * dev);
+static int BME680_Get_Press(BME680_HandleTypeDef * dev);
+static int BME680_Get_Hum(BME680_HandleTypeDef * dev);
+static int BME680_Get_Gas_R(BME680_HandleTypeDef * dev);
 
 /*----------------------------------------------------------------------------*/
 
@@ -136,7 +140,7 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 {
 	if(BME680_Get_Calibration(dev) != 0)
 		{
-			printf("BME680_Init: Failed to get calibrations parameters!\n");
+			printf("BME680_Init: Failed to get calibration parameters!\n");
 			return -1;
 		}
 	
@@ -186,8 +190,6 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 			printf("BME680_Init: ctrl_gas_1 transmit FAIL!\n");
 			return -1;
 		}
-
-	///
 	
 	return 0;
 }
@@ -206,12 +208,10 @@ int BME680_Init(BME680_HandleTypeDef *dev)
  */
 int BME680_Poll(BME680_HandleTypeDef *dev)
 {
-	uint8_t data, old_ctrl_meas;
-	HAL_StatusTypeDef status;
-	uint8_t eas_status;
-	uint16_t gas_r, hum, temp, press;
-
-	// Set MODE<1:0> to 0b01 to trigger a single measurement
+	int32_t temp, press, hum, gas_r;
+	uint8_t old_ctrl_meas, eas_status;
+	
+	/* Set MODE<1:0> to 0b01 (MODE_FORCED) to trigger a single measurement */
 	if(BME680_Read(dev, CTRL_MEAS, &old_ctrl_meas) == -1)
 		{
 			printf("BME680_Poll: Failed to read CTRL_MEAS!\n");
@@ -222,6 +222,9 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 			printf("BME680_Poll: CTRL_MEAS Transmit FAIL!\n");
 			return -1;
 		}
+
+	/* 100 ms delay to wait for heat up duration */
+	HAL_DELAY(100);
 	
 	/* wait for new data */
 	while((eas_status = BME680_Data_Ready(dev)) != 1)
@@ -234,75 +237,227 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 			HAL_Delay(POLL_DELAY);
 		}
 
-	/* move data from BME680 registers to output struct */
-	
-	/* get bits <9:2> of gas_r from GAS_R_MSB */
-	if(BME680_Read(dev, GAS_R_MSB, &data) == -1)
+	/* process data from BME680 output registers and move to output struct */
+	if(BME_Get_Temp(dev, &temp) != 0)
 		{
-			printf("BME680_Poll: Failed to read GAS_R_MSB!\n");
 			return -1;
 		}
-	gas_r = ((uint16_t)data) << 2;
-	/* get bits <1:0> of gas_r from GAS_R_MSB */
-	if(BME680_Read(dev, GAS_R_LSB, &data) == -1)
+	if(BME_Get_Press(dev, &press) != 0)
 		{
-			printf("BME680_Poll: Failed to read GAS_R_LSB!\n");
 			return -1;
 		}
-	gas_r |= (((uint16_t)data) >> 6) & 0x0003;
-
-	/* read MSB then LSB for humidity */
-	if(BME680_Read(dev, HUM_MSB, &data) == -1)
+	if(BME_Get_Hum(dev, &hum) != 0)
 		{
-			printf("BME680_Poll: Failed to read HUM_MSB!\n");
 			return -1;
 		}
-	hum = ((uint16_t)data) << 8;
-	if(BME680_Read(dev, HUM_LSB, &data) == -1)
+	if(BME_Get_Gas_R(dev, &gas_r) != 0)
 		{
-			printf("BME680_Poll: Failed to read HUM_LSB!\n");
 			return -1;
 		}
-	hum |= (uint16_t)data;
-	
-	/* read MSB then LSB for temperature */
-	if(BME680_Read(dev, TEMP_MSB, &data) == -1)
-		{
-			printf("BME680_Poll: Failed to read TEMP_MSB!\n");
-			return -1;
-		}
-	temp = ((uint16_t)data) << 8;
-	if(BME680_Read(dev, TEMP_LSB, &data) == -1)
-		{
-			printf("BME680_Poll: Failed to read TEMP_LSB!\n");
-			return -1;
-		}
-	temp |= (uint16_t)data;
-
-	/* read MSB then LSB for pressure */
-	if(BME680_Read(dev, PRESS_MSB, &data) == -1)
-		{
-			printf("BME680_Poll: Failed to read PRESS_MSB!\n");
-			return -1;
-		}
-	press = ((uint16_t)data) << 8;
-	if(BME680_Read(dev, PRESS_LSB, &data) == -1)
-		{
-			printf("BME680_Poll: Failed to read PRESS_LSB!\n");
-			return -1;
-		}
-	press |= (uint16_t)data;
-	
-	///
-	
-	dev->output.humidity = hum;
-	dev->output.temperature = temp;
-	dev->output.pressure = press;
-	dev->output.gas_resistance = gas_r;
 	
 	return 0;
 }
+
+static int BME680_Get_Hum(BME680_HandleTypeDef * dev)
+{
+	uint8_t msb, lsb;
+	uint16_t hum_adc;
+	int32_t temp_comp, temp_scaled, hum_comp;
+	int32_t var1, var2, var3, var4, var5, var6;
 	
+	/* read MSB then LSB for humidity */
+	if(BME680_Read(dev, HUM_MSB, &msb) == -1)
+		{
+			printf("BME680_Get_Hum: Failed to read HUM_MSB!\n");
+			return -1;
+		}
+	hum = ((uint16_t)msb) << 8;
+	if(BME680_Read(dev, HUM_LSB, &lsb) == -1)
+		{
+			printf("BME680_Get_Hum: Failed to read HUM_LSB!\n");
+			return -1;
+		}
+	hum |= (uint16_t)lsb;
+
+	temp_comp = dev->output.temperature;
+
+	/* following code is from BME680 datasheet page 20 */
+	temp_scaled = (int32_t)temp_comp;
+	var1 = (int32_t)hum_adc - (int32_t)((int32_t)dev->calib.par_h1 << 4) -
+		(((temp_scaled * (int32_t)dev->calib.par_h3) / ((int32_t)100)) >> 1);
+	var2 = ((int32_t)dev->calib.par_h2 *
+			(((temp_scaled * (int32_t)dev->calib.par_h4) / ((int32_t)100)) +
+			 (((temp_scaled * ((temp_scaled * (int32_t)dev->calib.par_h5) /
+							   ((int32_t)100))) >> 6) / ((int32_t)100)) +
+			 ((int32_t)(1 << 14)))) >> 10;
+	var3 = var1 * var2;
+	var4 = (((int32_t)dev->calib.par_h6 << 7) +
+			((temp_scaled * (int32_t)dev->calib.par_h7) / ((int32_t)100))) >> 4;
+	var5 = ((var3 >> 14) * (var3 >> 14)) >> 10;
+	var6 = (var4 * var5) >> 1;
+	hum_comp = (((var3 + var6) >> 10) * ((int32_t) 1000)) >> 12;
+
+	dev->output->humidity = hum_comp;
+	
+	return 0;
+}
+
+static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
+{
+	uint8_t msb, lsb, gas_range, range_switching_error;
+	uint16_t gas_adc;
+	int32_t gas_res;
+	
+	/* get bits <9:2> of gas_adc from GAS_R_MSB<7:0> */
+	if(BME680_Read(dev, GAS_R_MSB, &msb) == -1)
+		{
+			printf("BME680_Get_Gas_R: Failed to read GAS_R_MSB!\n");
+			return -1;
+		}
+	gas_adc = ((uint16_t)msb) << 2;
+	/* get bits <1:0> of gas_adc from GAS_R_LSB<7:6> */
+	if(BME680_Read(dev, GAS_R_LSB, &lsb) == -1)
+		{
+			printf("BME680_Get_Gas_R: Failed to read GAS_R_LSB!\n");
+			return -1;
+		}
+	gas_adc |= (((uint16_t)lsb) >> 6) & 0x3U;
+
+	gas_range = lsb & 0xFU; /* gas_range is bits <3:0> of GAS_R_LSB */
+	
+	/* get range_switching_error */
+	if(BME680_Read(dev, (0x04U), &range_switching_error) != 0)
+		{
+			printf("BME_Get_Gas_R: Failed to read RANGE_SWITCHING_ERROR!\n");
+			return -1;
+		}
+	
+	/* hardcoded const_array1_int and const_array2_int from datasheet page 23 */
+	const uint32_t const_array1_int[16] = {2147483647, 2147483647, 2147483647,
+		2147483647, 2147483647, 2126008810, 2147483647, 2130303777, 2147483647,
+		2147483647, 2143188679, 2136746228, 2147483647, 2126008810, 2147483647,
+		2147483647};
+	const uint32_t const_array2_int[16] = {4096000000, 2048000000, 1024000000,
+		512000000, 2557442255, 127110228, 64000000, 32258064, 16016016,
+		8000000, 4000000, 2000000, 1000000, 500000, 250000, 125000};
+	
+	/* following code is from BME680 datasheet page 23 */
+	int64_t var1 = (int64_t)(((1340 + (5 * (int64_t)range_switching_error)) *
+							  ((int64_t)const_array1_int[gas_range])) >> 16);
+	int64_t var2 = (int64_t)(gas_adc << 15) - (int64_t)(1 << 24) + var1;
+	int32_t gas_res = (int32_t)
+		((((int64_t)(const_array2_int[gas_range] *(int64_t)var1) >> 9)
+		  + (var2 >> 1)) / var2);
+
+	dev->output.gas_resistance = gas_res;
+	
+	return 0;
+}
+
+static int BME680_Get_Press(BME680_HandleTypeDef *dev)
+{
+	uint32_t press_adc; /* raw pressure output data */
+	int32_t var1, var2, var3, press_comp;
+	
+	/* pressure resolution is 16 + (osrs_p -1) bits, so, 20 */
+	
+	/* read MSB, LSB, XLSB for pressure */
+	if(BME680_Read(dev, PRESS_MSB, &msb) == -1)
+		{
+			printf("BME680_Get_Press: Failed to read PRESS_MSB!\n");
+			return -1;
+		}
+	if(BME680_Read(dev, PRESS_LSB, &lsb) == -1)
+		{
+			printf("BME680_Get_Press: Failed to read PRESS_LSB!\n");
+			return -1;
+		}
+	if(BME680_Read(dev, PRESS_XLSB, &xlsb) == -1)
+		{
+			printf("BME680_Get_Press: Failed to read PRESS_XLSB!\n");
+			return -1;
+		}
+	
+	/* construct press_adc from msb lsb and xlsb */
+	press_adc = ((uint32_t)press_msb << 12)
+	  	      | ((uint32_t)press_lsb << 12)
+		      | ((uint32_t)press_xlsb >> 4);
+	
+	/* following code is from BME680 datasheet page 18/19 */
+	var1 = ((int32_t)dev->t_fine >> 1) - 64000;
+	var2 = ((((var1 >> 2) * (var1 >> 2)) >> 11) *
+		   (int32_t)dev->calib.par_p6) >> 2;
+	var2 = var2 + ((var1 * (int32_t)dev->calib.par_p5) << 1);
+	var2 = (var2 >> 2) + ((int32_t)dev->calib.par_p4 << 16);
+	var1 = (((((var1 >> 2) * (var1 >> 2)) >> 13) *
+		   ((int32_t)dev->calib.par_p3 << 5)) >> 3) +
+		   (((int32_t)dev->calib.par_p2 * var1) >> 1);
+	var1 = var1 >> 18;
+	var1 = ((32768 + var1) * (int32_t)dev->calib.par_p1) >> 15;
+	press_comp = 1048576 - press_adc; /* datasheet says press_raw??? */
+	press_comp = (uint32_t)((press_comp) - (var2 >> 12)) * ((uint32_t)3125);
+	if(press_comp >= (1 << 30))
+		press_comp = ((press_comp / (uint32_t)var1) << 1);
+	else
+		press_comp = ((press_comp << 1) / (uint32_t)var1);
+	var1 = ((int32_t)dev->calib.par_p9 *
+			(int32_t)(((press_comp >> 3) * (press_comp >> 3)) >> 13)) >> 12;
+	var2 = ((int32_t)(press_comp >> 2) * (int32_t)dev->calib.par_p8) >> 13;
+	var3 = ((int32_t)(press_comp >> 8) * (int32_t)(press_comp >> 8) *
+			(int32_t)(press_comp >> 8) * (int32_t)dev->calib.par_p10) >> 17;
+	press_comp = (int32_t)(press_comp) +
+	     	     ((var1+ var2 + var3 + ((int32_t)par_p7 << 7)) >> 4);
+	/* what */
+	dev->output.pressure = press_comp;
+	
+	return 0;
+}
+
+static int BME680_Get_Temp(BME680_HandleTypeDef *dev)
+{
+	uint32_t temp_adc; /* raw (uncompensated) temperature reading */
+	int32_t var1, var2, var3, t_fine, temp_comp;
+	uint8_t msb, lsb, xlsb; /* bytes of temp_adc */
+
+	/* temperature resolution = 16 + (osrs_t - 1) bits. So 17 bits */
+	
+	/* read MSB, LSB, XLSB for temperature */
+	if(BME680_Read(dev, TEMP_MSB, &msb) == -1)
+		{
+			printf("BME680_Get_Temp: Failed to read TEMP_MSB!\n");
+			return -1;
+		}
+	if(BME680_Read(dev, TEMP_LSB, &lsb) == -1)
+		{
+			printf("BME680_Get_Temp: Failed to read TEMP_LSB!\n");
+			return -1;
+		}
+	if(BME680_Read(dev, TEMP_XLSB, &xlsb) == -1)
+		{
+			printf("BME680_Get_Temp: Failed to read TEMP_XLSB!\n");
+			return -1;
+		}
+	
+	/* construct temp_adc from msb lsb and xlsb */
+	temp_adc = ((uint32_t)temp_msb << 12)
+		     | ((uint32_t)temp_lsb << 12)
+		     | ((uint32_t)temp_xlsb >> 4);
+	
+	/* Following code is from the BME680 Datasheet page 17 */
+	var1 = ((int32_t)temp_adc >> 3) - ((int32_t)dev->calib.par_t1 << 1);
+	var2 = (var1 * (int32_t)dev->calib.par_t2) >> 11;
+	var3 = ((((var1 >> 1) * (var1 >> 1)) >> 12)
+			* ((int32_t)dev->calib.par_t3 << 4)) >> 14;
+	t_fine = var2 + var3;
+	temp_comp = ((t_fine * 5) + 128) >> 8;
+
+	/* t_fine value used for other sensor reading compensations */
+	dev->t_fine = t_fine;
+	dev->output.temperature = temp_comp;
+	
+	return 0;
+}
+
 /*----------------------------------------------------------------------------*/
 
 /* returns -1 on read fail, 1 if ready, 0 if not ready */
@@ -379,6 +534,7 @@ static int BME680_Get_Calibration(BME680_HandleTypeDef *dev)
 			return -1;
 		}
 
+	///
 
 	return 0;
 }
