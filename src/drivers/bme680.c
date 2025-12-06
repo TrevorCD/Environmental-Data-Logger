@@ -20,22 +20,18 @@
  *
  *----------------------------------------------------------------------------*/
 
-
-
-/* Kernel Includes */
-#include "FreeRTOS.h"
-
 /* Hardware Includes */
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal.h"
 
 #include <stdio.h> /* ONLY USE printf()! */
+
 #include "bme680.h"
 
 /*----------------------------------------------------------------------------*/
 
 #define TARGET_TEMP    300
-#define AMB_TEMP       25 /* Initial ambient temp */
+#define AMB_TEMP       25 /* Initial ambient temperature */
 
 /* I2C GPIO Pins */
 #define BME680_SDA     GPIO_PIN_9
@@ -43,8 +39,9 @@
 
 #define SLAVE_ADDR     (0x77U << 1) /* 0x77 << 1 (7 bit addr; HAL expects 8 */
 
+/* Timing values */
 #define READ_TIMEOUT   (100) /* timeout on HAL_I2C_Mem_Read */
-#define POLL_DELAY     (10)
+#define POLL_DELAY     (10)  /* delay on BME680_Data_Ready in BME680_Poll */
 
 /* BME680 Read/Write Registers */
 #define CTRL_MEAS      (0x74U) /* osrs_t<7:5> osrs_p<4:2> mode<1:0> */
@@ -175,11 +172,11 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 			return -1;
 		}
 
-	/* Set output data to INT_MIN to represent uncalculated values */
-	dev->humidity = INT_MIN;
-	dev->temperature = INT_MIN;
-	dev->pressure = INT_MIN;
-	dev->gas_resistance = INT_MIN;
+	/* Set output data to INT32_MIN to represent uncalculated values */
+	dev->output.humidity = INT32_MIN;
+	dev->output.temperature = INT32_MIN;
+	dev->output.pressure = INT32_MIN;
+	dev->output.gas_resistance = INT32_MIN;
 
 	/* Set initial temperature values (target_temp does not change) */
 	dev->amb_temp = AMB_TEMP;
@@ -326,6 +323,8 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 	return 0;
 }
 
+/*----------------------------------------------------------------------------*/
+
 static int BME680_Get_Hum(BME680_HandleTypeDef *dev)
 {
 	uint8_t msb, lsb;
@@ -368,6 +367,8 @@ static int BME680_Get_Hum(BME680_HandleTypeDef *dev)
 	
 	return 0;
 }
+
+/*----------------------------------------------------------------------------*/
 
 static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 {
@@ -418,6 +419,8 @@ static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 	
 	return 0;
 }
+
+/*----------------------------------------------------------------------------*/
 
 static int BME680_Get_Press(BME680_HandleTypeDef *dev)
 {
@@ -476,6 +479,8 @@ static int BME680_Get_Press(BME680_HandleTypeDef *dev)
 	
 	return 0;
 }
+
+/*----------------------------------------------------------------------------*/
 
 static int BME680_Get_Temp(BME680_HandleTypeDef *dev)
 {
@@ -553,6 +558,9 @@ static int BME680_Read(BME680_HandleTypeDef *dev, uint8_t reg, uint8_t *data)
 		}
 	return 0;
 }
+
+/*----------------------------------------------------------------------------*/
+
 /* returns -1 on fail, 0 on success.
  * constructs *data with the bytes at msb and lsb
  * only works on two byte long values that are aligned to byte boundaries

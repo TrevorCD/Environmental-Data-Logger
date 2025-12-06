@@ -48,7 +48,8 @@
 static void prvSetupHardware(void);
 static void SystemClock_Config(void);
 static void Error_Handler(void);
-static int  prvSetupBME680(BME680_HandleTypeDef *dev, I2C_TypeDef *instance);
+static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_HandleTypeDef *hi2c,
+						  I2C_TypeDef *instance);
 /*--------------------------------[ Globals ]---------------------------------*/
 
 /*-------------------------------[ Functions ]--------------------------------*/
@@ -60,8 +61,8 @@ int main(void)
 	ITM_Init();
 
 	BME680_HandleTypeDef hbme = {0};
-	
-	prvSetupBME680(&hbme, I2C1);
+	I2C_HandleTypeDef hi2c = {0};
+	prvSetupBME680(&hbme, &hi2c, I2C1);
 	
     for(;;)
     {
@@ -87,7 +88,8 @@ static void prvSetupHardware(void)
     NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 }
 
-static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_TypeDef *instance)
+static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_HandleTypeDef *hi2c,
+						  I2C_TypeDef *instance)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	
@@ -104,18 +106,19 @@ static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_TypeDef *instance)
 	
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 	
-	/* Configure HAL I2C Init structure */
-	dev->hi2c.Instance = instance;
-	dev->hi2c.Init.ClockSpeed = 100000;
-	dev->hi2c.Init.DutyCycle = I2C_DUTYCYCLE_2;
-	dev->hi2c.Init.OwnAddress1 = 0;
-	dev->hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	dev->hi2c.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-	dev->hi2c.Init.OwnAddress2 = 0;
-	dev->hi2c.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-	dev->hi2c.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+	/* Configure HAL I2C Handle */
+	dev->hi2c = hi2c;
+	dev->hi2c->Instance = instance;
+	dev->hi2c->Init.ClockSpeed = 100000;
+	dev->hi2c->Init.DutyCycle = I2C_DUTYCYCLE_2;
+	dev->hi2c->Init.OwnAddress1 = 0;
+	dev->hi2c->Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+	dev->hi2c->Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+	dev->hi2c->Init.OwnAddress2 = 0;
+	dev->hi2c->Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+	dev->hi2c->Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
 	
-	if(HAL_I2C_Init(&dev->hi2c) != HAL_OK)
+	if(HAL_I2C_Init(dev->hi2c) != HAL_OK)
 		{
 			printf("HAL I2C INIT FAIL!\n");
 			return -1;

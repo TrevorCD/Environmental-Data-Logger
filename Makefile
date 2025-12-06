@@ -80,7 +80,8 @@ SRCS += src/system_stm32f4xx.c \
         $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c \
         $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c \
         $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c \
-        $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c
+        $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c \
+		$(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c
 
 ASM_SRCS += src/startup_stm32f446xx.s
 
