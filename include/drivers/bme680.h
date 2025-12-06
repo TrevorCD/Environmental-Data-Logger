@@ -30,6 +30,7 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_i2c.h"
 
+/* Ouput data updated by BME680_Poll */
 typedef struct {
 	int32_t humidity;
 	int32_t temperature;
@@ -73,16 +74,21 @@ typedef struct {
 	/* I2C Handle must be initialized prior to device initialization */
 	I2C_HandleTypeDef *hi2c;
 	
-	/*  */
+	/* temperature values for BME680_Calc_Res_Heat */
 	int32_t amb_temp;
+	int32_t old_amb_temp;
 	int32_t target_temp;
 
-	/*  */
+	/* value used by BME680_Get... functions */
 	int32_t t_fine;
-	
+
 	/*  */
 	uint8_t res_heat_0;
+
+	/* SET THIS TO 0 BEFORE CALLING BME680_Init! */
+	uint8_t initialized;
 	
+	/* Output that is updated by BME680_Poll */
 	BME680_OutputTypeDef output;
 	
 	/* Calibration Parameters */
@@ -97,6 +103,9 @@ typedef struct {
  * Initializes the BME680 device registers
  *
  * Pre Requirements:
+ *
+ *  - dev->initialized != 1
+ *
  *  - __HAL_RCC_GPIOB_CLK_ENABLE();
  *  - __HAL_RCC_I2C1_CLK_ENABLE();
  *

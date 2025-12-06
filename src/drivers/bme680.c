@@ -34,8 +34,8 @@
 
 /*----------------------------------------------------------------------------*/
 
-#define TARGET_TEMP    (?)
-#define AMB_TEMP       (?)
+#define TARGET_TEMP    300
+#define AMB_TEMP       25 /* Initial ambient temp */
 
 /* I2C GPIO Pins */
 #define BME680_SDA     GPIO_PIN_9
@@ -169,6 +169,23 @@ static int BME680_Read_2(BME680_HandleTypeDef *dev, uint8_t msb, uint8_t lsb,
  */
 int BME680_Init(BME680_HandleTypeDef *dev)
 {
+	if(dev->initialized == 1)
+		{
+			printf("BME680_Init: Device already initialized!\n");
+			return -1;
+		}
+
+	/* Set output data to INT_MIN to represent uncalculated values */
+	dev->humidity = INT_MIN;
+	dev->temperature = INT_MIN;
+	dev->pressure = INT_MIN;
+	dev->gas_resistance = INT_MIN;
+
+	/* Set initial temperature values (target_temp does not change) */
+	dev->amb_temp = AMB_TEMP;
+	dev->old_amb_temp = AMB_TEMP;
+	dev->target_temp = TARGET_TEMP;
+	
 	if(BME680_Get_Calibration(dev) != 0)
 		{
 			printf("BME680_Init: Failed to get calibration parameters!\n");
@@ -198,9 +215,6 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 			printf("BME680_Init: gas_wait_0 transmit FAIL!\n");
 			return -1;
 		}
-
-	dev->amb_temp = AMB_TEMP;
-	dev->target_temp = TARGET_TEMP;
 	
 	/* Set corresponding heater set-point by writing target heater resistance to
 	 * RES_HEAT_0<7:0> */
@@ -221,6 +235,8 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 			printf("BME680_Init: ctrl_gas_1 transmit FAIL!\n");
 			return -1;
 		}
+
+	dev->initialized = 1;
 	
 	return 0;
 }
@@ -241,6 +257,12 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 {
 	int32_t temp, press, hum, gas_r;
 	uint8_t old_ctrl_meas, eas_status;
+
+	if(dev->initialized != 1)
+		{
+			printf("BME680_Poll: Device not initialized!\n");
+			return -1;
+		}
 	
 	/* Set MODE<1:0> to 0b01 (MODE_FORCED) to trigger a single measurement */
 	if(BME680_Read(dev, CTRL_MEAS, &old_ctrl_meas) != 0)
@@ -284,6 +306,21 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 	if(BME680_Get_Gas_R(dev) != 0)
 		{
 			return -1;
+		}
+
+	/* Update the target heater resistance if the ambient temperature changes */
+	if(dev->amb_temp != dev->old_amb_temp)
+		{
+			if(BME680_Calc_Res_Heat(dev) != 0)
+				{
+					printf("BME680_Poll: cal_res_heat failure!\n");
+					return -1;
+				}
+			if(BME680_Transmit(dev, RES_HEAT_0, dev->res_heat_0) != 0)
+				{
+					printf("BME680_Poll: res_heat_0 transmit FAIL!\n");
+					return -1;
+				}	
 		}
 	
 	return 0;
@@ -336,6 +373,15 @@ static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 {
 	uint8_t msb, lsb, gas_range, range_switching_error;
 	uint16_t gas_adc; /* raw gas resistance value */
+
+	/* hardcoded const_array1_int and const_array2_int from datasheet page 23 */
+	const uint32_t const_array1_int[16] = {2147483647, 2147483647, 2147483647,
+		2147483647, 2147483647, 2126008810, 2147483647, 2130303777, 2147483647,
+		2147483647, 2143188679, 2136746228, 2147483647, 2126008810, 2147483647,
+		2147483647};
+	const uint32_t const_array2_int[16] = {4096000000, 2048000000, 1024000000,
+		512000000, 2557442255, 127110228, 64000000, 32258064, 16016016,
+		8000000, 4000000, 2000000, 1000000, 500000, 250000, 125000};
 	
 	/* get bits <9:2> of gas_adc from GAS_R_MSB<7:0> */
 	if(BME680_Read(dev, GAS_R_MSB, &msb) != 0)
@@ -359,15 +405,6 @@ static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 			printf("BME_Get_Gas_R: Failed to read RANGE_SWITCHING_ERROR!\n");
 			return -1;
 		}
-	
-	/* hardcoded const_array1_int and const_array2_int from datasheet page 23 */
-	const uint32_t const_array1_int[16] = {2147483647, 2147483647, 2147483647,
-		2147483647, 2147483647, 2126008810, 2147483647, 2130303777, 2147483647,
-		2147483647, 2143188679, 2136746228, 2147483647, 2126008810, 2147483647,
-		2147483647};
-	const uint32_t const_array2_int[16] = {4096000000, 2048000000, 1024000000,
-		512000000, 2557442255, 127110228, 64000000, 32258064, 16016016,
-		8000000, 4000000, 2000000, 1000000, 500000, 250000, 125000};
 	
 	/* following code is from BME680 datasheet page 23 */
 	int64_t var1 = (int64_t)(((1340 + (5 * (int64_t)range_switching_error)) *
@@ -479,6 +516,10 @@ static int BME680_Get_Temp(BME680_HandleTypeDef *dev)
 	/* t_fine value used for other sensor reading compensations */
 	dev->t_fine = t_fine;
 	dev->output.temperature = temp_comp;
+
+	/* Update and cycle ambient temperature values */
+	dev->old_amb_temp = dev->amb_temp;
+	dev->amb_temp = temp_comp;
 	
 	return 0;
 }
@@ -512,7 +553,10 @@ static int BME680_Read(BME680_HandleTypeDef *dev, uint8_t reg, uint8_t *data)
 		}
 	return 0;
 }
-
+/* returns -1 on fail, 0 on success.
+ * constructs *data with the bytes at msb and lsb
+ * only works on two byte long values that are aligned to byte boundaries
+ */
 static int BME680_Read_2(BME680_HandleTypeDef *dev, uint8_t msb, uint8_t lsb,
 						 uint16_t *data)
 {
