@@ -15,16 +15,12 @@
  *
  *----------------------------------------------------------------------------*/
 /*
- * This device driver is for the BME680 Environmental Sensor.
- * Written for FreeRTOS on STM32F4xx
+ * This device driver is for the BME680 Environmental Sensor and  STM32F4xx.
  *
  *----------------------------------------------------------------------------*/
 
 #ifndef BME680_H
 #define BME680_H
-
-/* Kernel Includes */
-#include "FreeRTOS.h"
 
 /* Hardware Includes */
 #include "stm32f4xx.h"

@@ -15,8 +15,7 @@
  *
  *----------------------------------------------------------------------------
  *
- * This device driver is for the BME680 Environmental Sensor.
- * Written for FreeRTOS on STM32F4xx
+ * This device driver is for the BME680 Environmental Sensor and STM23f4xx
  *
  *----------------------------------------------------------------------------*/
 
