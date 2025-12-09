@@ -52,8 +52,7 @@
 static void prvSetupHardware(void);
 static void SystemClock_Config(void);
 static void Error_Handler(void);
-static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_HandleTypeDef *hi2c,
-						  I2C_TypeDef *instance);
+static void prvSetupBME680(void);
 
 /*-------------------------------[ Functions ]--------------------------------*/
 
@@ -62,7 +61,7 @@ int main(void)
     /* Configure the hardware */
     prvSetupHardware();
 	ITM_Init();
-	prvSetupBME680(&hbme, &hi2c, I2C1);
+	prvSetupBME680();
 
 	/* Start tasks */
 	vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
@@ -85,8 +84,7 @@ static void prvSetupHardware(void)
     NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 }
 
-static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_HandleTypeDef *hi2c,
-						  I2C_TypeDef *instance)
+static void prvSetupBME680(void)
 {
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 	
@@ -102,9 +100,6 @@ static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_HandleTypeDef *hi2c,
     GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
 	
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-
-	/// start vBME680PollTask
 }
 
 void vApplicationTickHook(void)
