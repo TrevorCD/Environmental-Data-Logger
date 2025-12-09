@@ -18,10 +18,10 @@ int _write(int file, char *ptr, int len)
 		return 0;   // ITM not ready -> output nothing
 	
     for (int i = 0; i < len; i++)
-		{
-			// sends char on ITM->Port[0]
-			ITM_SendChar(ptr[i]);
-		}
+	{
+		// sends char on ITM->Port[0]
+		ITM_SendChar(ptr[i]);
+	}
     return len;
 }
 
