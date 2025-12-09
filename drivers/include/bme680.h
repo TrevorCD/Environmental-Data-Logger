@@ -24,7 +24,7 @@
 
 /* Hardware Includes */
 #include "stm32f4xx.h"
-#include "stm32f4xx_hal_i2c.h"
+#include "stm32f4xx_hal.h"
 
 /* Ouput data updated by BME680_Poll */
 typedef struct {
