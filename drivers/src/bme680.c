@@ -36,7 +36,7 @@
 #define BME680_SDA     GPIO_PIN_9
 #define BME680_SCL     GPIO_PIN_8
 
-#define SLAVE_ADDR     (0x77U << 1) /* 0x77 << 1 (7 bit addr; HAL expects 8 */
+#define SLAVE_ADDR     (0x76U << 1) /* 0x77 << 1 (7 bit addr; HAL expects 8 */
 
 /* Timing values */
 #define READ_TIMEOUT   (100) /* timeout on HAL_I2C_Mem_Read */
@@ -171,6 +171,13 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 		return -1;
 	}
 
+	if(HAL_I2C_IsDeviceReady(dev->hi2c, SLAVE_ADDR, 3, 50) != HAL_OK)
+	{
+		printf("BME680_Init: Device not ready!\n");
+		return -1;
+	}
+
+	
 	/* Set output data to INT32_MIN to represent uncalculated values */
 	dev->output.humidity = INT32_MIN;
 	dev->output.temperature = INT32_MIN;
