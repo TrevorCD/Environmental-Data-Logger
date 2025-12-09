@@ -120,8 +120,14 @@ CFLAGS += -I$(KERNEL_DIR)/include \
 #       BME680 Device Driver       #
 #==================================#
 
-SRCS += src/drivers/bme680.c
-CFLAGS += -I./include/drivers
+SRCS += drivers/src/bme680.c
+CFLAGS += -I./drivers/include/
+
+#==================================#
+#        Application Files         #
+#==================================#
+
+SRCS += src/bme680poll.c
 
 #----------------------------------[ Targets ]----------------------------------
 
