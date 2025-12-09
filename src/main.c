@@ -39,6 +39,10 @@
 #include <stdio.h> /* for printf. _write is overwritten */
 #include "itm.h"
 #include "bme680.h"
+#include "bme680poll.h"
+
+/* Task priorities */
+#define mainBME680_POLL_TASK_PRIORITY ( tskIDLE_PRIORITY + 1UL )
 
 /* A block time of zero simply means "don't block". */
 #define mainDONT_BLOCK                             (0UL)
@@ -50,31 +54,24 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_HandleTypeDef *hi2c,
 						  I2C_TypeDef *instance);
-/*--------------------------------[ Globals ]---------------------------------*/
 
 /*-------------------------------[ Functions ]--------------------------------*/
 
 int main(void)
 {
-    /* Configure the hardware ready to run the test. */
+    /* Configure the hardware */
     prvSetupHardware();
 	ITM_Init();
-
-	BME680_HandleTypeDef hbme = {0};
-	I2C_HandleTypeDef hi2c = {0};
 	prvSetupBME680(&hbme, &hi2c, I2C1);
-	
-    for(;;)
-    {
-		printf("hello\n");
-    }
+
+	/* Start tasks */
+	vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
 	
     /* Start the scheduler. */
     vTaskStartScheduler();
 	
     for(;;)
     {
-		printf("hello\n");
     }
 }
 
@@ -105,31 +102,14 @@ static int prvSetupBME680(BME680_HandleTypeDef *dev, I2C_HandleTypeDef *hi2c,
     GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
 	
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-	
-	/* Configure HAL I2C Handle */
-	dev->hi2c = hi2c;
-	dev->hi2c->Instance = instance;
-	dev->hi2c->Init.ClockSpeed = 100000;
-	dev->hi2c->Init.DutyCycle = I2C_DUTYCYCLE_2;
-	dev->hi2c->Init.OwnAddress1 = 0;
-	dev->hi2c->Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	dev->hi2c->Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-	dev->hi2c->Init.OwnAddress2 = 0;
-	dev->hi2c->Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-	dev->hi2c->Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	
-	if(HAL_I2C_Init(dev->hi2c) != HAL_OK)
-		{
-			printf("HAL I2C INIT FAIL!\n");
-			return -1;
-		}
-	
-	return BME680_Init(dev);
+
+
+	/// start vBME680PollTask
 }
 
 void vApplicationTickHook(void)
 {
-
+	HAL_IncTick();
 }
 
 void vApplicationMallocFailedHook(void)
@@ -144,6 +124,8 @@ void vApplicationMallocFailedHook(void)
      * provide information on how the remaining heap might be fragmented). */
     taskDISABLE_INTERRUPTS();
 
+	printf("ATTEMPTED TO MALLOC. MALLOC ALWAYS FAILS! SEE syscalls.c!\n");
+	
     for(; ;)
     {
     }
@@ -235,3 +217,10 @@ static void Error_Handler(void)
 		{
 		}
 }
+/*
+void SysTick_Handler(void)
+{
+    HAL_IncTick();          // Keep HAL time working
+    xPortSysTickHandler();  // Give tick to FreeRTOS
+}
+*/
