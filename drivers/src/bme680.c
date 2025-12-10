@@ -129,6 +129,7 @@ static int BME680_Get_Hum(BME680_HandleTypeDef *dev);
 static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev);
 static int BME680_Read_2(BME680_HandleTypeDef *dev, uint8_t msb, uint8_t lsb,
 						 uint16_t *data);
+static const char* HAL_StatusToString(HAL_StatusTypeDef status);
 /*----------------------------------------------------------------------------*/
 
 /* BME680_Init:
@@ -165,15 +166,18 @@ static int BME680_Read_2(BME680_HandleTypeDef *dev, uint8_t msb, uint8_t lsb,
  */
 int BME680_Init(BME680_HandleTypeDef *dev)
 {
+	HAL_StatusTypeDef status;
+	
 	if(dev->initialized == 1)
 	{
 		printf("BME680_Init: Device already initialized!\n");
 		return -1;
 	}
 
-	if(HAL_I2C_IsDeviceReady(dev->hi2c, SLAVE_ADDR, 3, 50) != HAL_OK)
+	if((status = HAL_I2C_IsDeviceReady(dev->hi2c, SLAVE_ADDR, 3, 50)) != HAL_OK)
 	{
-		printf("BME680_Init: Device not ready!\n");
+		printf("BME680_Init: Device not ready! Hal returned: %s\n",
+			   HAL_StatusToString(status));
 		return -1;
 	}
 
@@ -720,4 +724,21 @@ static int BME680_Calc_Res_Heat(BME680_HandleTypeDef *dev)
 	dev->res_heat_0 = (uint8_t)((res_heat_x100 + 50) / 100);
 	
 	return 0;
+}
+
+static const char* HAL_StatusToString(HAL_StatusTypeDef status)
+{
+    switch (status)
+    {
+	case HAL_OK:
+		return "HAL_OK";
+	case HAL_ERROR:
+		return "HAL_ERROR";
+	case HAL_BUSY:
+		return "HAL_BUSY";
+	case HAL_TIMEOUT:
+		return "HAL_TIMEOUT";
+	default:
+		return "HAL_UNKNOWN";
+    }
 }
