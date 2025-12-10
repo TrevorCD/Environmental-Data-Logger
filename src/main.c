@@ -47,12 +47,19 @@
 /* A block time of zero simply means "don't block". */
 #define mainDONT_BLOCK                             (0UL)
 
+/*--------------------------------[ Globals ]---------------------------------*/
+
+BME680_HandleTypeDef hbme = {0};
+I2C_HandleTypeDef hi2c = {0};
+SPI_HandleTypeDef hspi = {0};
+
 /*-------------------------------[ Prototypes ]-------------------------------*/
 
 static void prvSetupHardware(void);
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void prvSetupBME680(void);
+static void prvSetupSDCard(void);
 
 /*-------------------------------[ Functions ]--------------------------------*/
 
@@ -62,7 +69,8 @@ int main(void)
     prvSetupHardware();
 	ITM_Init();
 	prvSetupBME680();
-
+	prvSetupSDCard();
+	
 	/* Start tasks */
 	vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
 	
@@ -100,6 +108,79 @@ static void prvSetupBME680(void)
     GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
 	
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+	/* Configure HAL I2C Handle */
+	hbme.hi2c = &hi2c;
+	hbme.hi2c->Instance = I2C1;
+	hbme.hi2c->Init.ClockSpeed = 100000;
+	hbme.hi2c->Init.DutyCycle = I2C_DUTYCYCLE_2;
+	hbme.hi2c->Init.OwnAddress1 = 0;
+	hbme.hi2c->Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+	hbme.hi2c->Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+	hbme.hi2c->Init.OwnAddress2 = 0;
+	hbme.hi2c->Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+	hbme.hi2c->Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+	
+	if(HAL_I2C_Init(hbme.hi2c) != HAL_OK)
+	{
+		printf("main: FAILED TO INIT I2C\n");
+		for( ; ; )
+		{
+		}
+	}
+	
+	if(BME680_Init(&hbme) != 0)
+	{
+		/* BME680_Init prints it's own error messages */
+		for( ; ; )
+		{
+		}
+	}
+}
+
+static void prvSetupSDCard(void)
+{
+	/* Enable clocks */
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_SPI1_CLK_ENABLE();
+
+    /* PA5 SCK, PA6 MISO, PA7 MOSI */
+	GPIO_InitTypeDef GPIO_Init = {0};
+	GPIO_Init.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+	GPIO_Init.Mode = GPIO_MODE_AF_PP;       // AF Push-Pull
+	GPIO_Init.Pull = GPIO_NOPULL;           // external levels
+	GPIO_Init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	GPIO_Init.Alternate = GPIO_AF5_SPI1;
+	HAL_GPIO_Init(GPIOA, &GPIO_Init);
+
+    /* PA4 CS as GPIO output */
+	GPIO_Init.Pin = GPIO_PIN_4;
+	GPIO_Init.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_Init.Pull = GPIO_NOPULL;
+	GPIO_Init.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_Init);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET); // CS idle high
+
+	hspi.Instance               = SPI1;
+	hspi.Init.Mode              = SPI_MODE_MASTER;
+	hspi.Init.Direction         = SPI_DIRECTION_2LINES;
+	hspi.Init.DataSize          = SPI_DATASIZE_8BIT;
+	hspi.Init.CLKPolarity       = SPI_POLARITY_LOW; // CPOL = 0
+	hspi.Init.CLKPhase          = SPI_PHASE_1EDGE; // CPHA = 0 → MODE0
+	hspi.Init.NSS               = SPI_NSS_SOFT; // Use software CS (GPIO)
+	hspi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256; // ~300 kHz
+	hspi.Init.FirstBit          = SPI_FIRSTBIT_MSB;
+	hspi.Init.TIMode            = SPI_TIMODE_DISABLE;
+	hspi.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
+	hspi.Init.CRCPolynomial     = 7;
+
+	if(HAL_SPI_Init(&hspi) != HAL_OK)
+	{
+		printf("main: FAILED TO INIT SPI\n");
+		for( ; ; )
+		{
+		}
+	}
 }
 
 void vApplicationTickHook(void)
@@ -212,10 +293,3 @@ static void Error_Handler(void)
 		{
 		}
 }
-/*
-void SysTick_Handler(void)
-{
-    HAL_IncTick();          // Keep HAL time working
-    xPortSysTickHandler();  // Give tick to FreeRTOS
-}
-*/
