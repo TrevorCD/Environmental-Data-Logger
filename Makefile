@@ -127,7 +127,9 @@ CFLAGS += -I./drivers/include/
 #        Application Files         #
 #==================================#
 
-SRCS += src/bme680poll.c
+SRCS += tasks/src/bme680poll.c
+CFLAGS += -Itasks/include/
+
 
 #----------------------------------[ Targets ]----------------------------------
 
