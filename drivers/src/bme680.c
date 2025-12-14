@@ -23,7 +23,7 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal.h"
 
-#include <stdio.h> /* ONLY USE printf()! */
+//#include <stdio.h> /* ONLY USE printf()! */
 
 #include "bme680.h"
 
@@ -170,14 +170,14 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 	
 	if(dev->initialized == 1)
 	{
-		printf("BME680_Init: Device already initialized!\n");
+		//printf("BME680_Init: Device already initialized!\n");
 		return -1;
 	}
 
 	if((status = HAL_I2C_IsDeviceReady(dev->hi2c, SLAVE_ADDR, 3, 50)) != HAL_OK)
 	{
-		printf("BME680_Init: Device not ready! Hal returned: %s\n",
-			   HAL_StatusToString(status));
+		//printf("BME680_Init: Device not ready! Hal returned: %s\n",
+		//HAL_StatusToString(status));
 		return -1;
 	}
 
@@ -195,7 +195,7 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 	
 	if(BME680_Get_Calibration(dev) != 0)
 	{
-		printf("BME680_Init: Failed to get calibration parameters!\n");
+		//printf("BME680_Init: Failed to get calibration parameters!\n");
 		return -1;
 	}
 	
@@ -203,7 +203,7 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 	/* This also sets spi_3w_int_en to 0 */
 	if(BME680_Transmit(dev, CTRL_HUM, OVERSAMPLE_H) != 0)
 	{
-		printf("BME680_Init: Humidity oversample transmit FAIL!\n");
+		//printf("BME680_Init: Humidity oversample transmit FAIL!\n");
 		return -1;
 	}
 	
@@ -212,14 +212,14 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 	if(BME680_Transmit(dev, CTRL_MEAS,
 					   (OVERSAMPLE_P << 2) | (OVERSAMPLE_T << 5)) != 0)
 	{
-		printf("BME680_Init: Pressure & temp oversample transmit FAIL!\n");
+		//printf("BME680_Init: Pressure & temp oversample transmit FAIL!\n");
 		return -1;
 	}
 	
 	/* Set GAS_WAIT_0<7:0> to 0x59 to select 100 ms heat up duration */
 	if(BME680_Transmit(dev, GAS_WAIT_0, (0x59U)) != 0)
 	{
-		printf("BME680_Init: gas_wait_0 transmit FAIL!\n");
+		//printf("BME680_Init: gas_wait_0 transmit FAIL!\n");
 		return -1;
 	}
 	
@@ -227,19 +227,19 @@ int BME680_Init(BME680_HandleTypeDef *dev)
 	 * RES_HEAT_0<7:0> */
 	if(BME680_Calc_Res_Heat(dev) != 0)
 	{
-		printf("BME680_Init: cal_res_heat failure!\n");
+		//printf("BME680_Init: cal_res_heat failure!\n");
 		return -1;
 	}
 	if(BME680_Transmit(dev, RES_HEAT_0, dev->res_heat_0) != 0)
 	{
-		printf("BME680_Init: res_heat_0 transmit FAIL!\n");
+		//printf("BME680_Init: res_heat_0 transmit FAIL!\n");
 		return -1;
 	}
 	
 	/* In CTRL_GAS, set nb_conv<3:0> to 0x0 and run_gas<4> to 1 */
 	if(BME680_Transmit(dev, CTRL_GAS_1, (1U << 4)) != 0)
 	{
-		printf("BME680_Init: ctrl_gas_1 transmit FAIL!\n");
+		//printf("BME680_Init: ctrl_gas_1 transmit FAIL!\n");
 		return -1;
 	}
 
@@ -267,19 +267,19 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 
 	if(dev->initialized != 1)
 	{
-		printf("BME680_Poll: Device not initialized!\n");
+		//printf("BME680_Poll: Device not initialized!\n");
 		return -1;
 	}
 	
 	/* Set MODE<1:0> to 0b01 (MODE_FORCED) to trigger a single measurement */
 	if(BME680_Read(dev, CTRL_MEAS, &old_ctrl_meas) != 0)
 	{
-		printf("BME680_Poll: Failed to read CTRL_MEAS!\n");
+		//printf("BME680_Poll: Failed to read CTRL_MEAS!\n");
 		return -1;
 	}
 	if(BME680_Transmit(dev, CTRL_MEAS, old_ctrl_meas | MODE_FORCED) != 0)
 	{
-		printf("BME680_Poll: CTRL_MEAS Transmit FAIL!\n");
+		//printf("BME680_Poll: CTRL_MEAS Transmit FAIL!\n");
 		return -1;
 	}
 
@@ -320,12 +320,12 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 	{
 		if(BME680_Calc_Res_Heat(dev) != 0)
 		{
-			printf("BME680_Poll: cal_res_heat failure!\n");
+			//printf("BME680_Poll: cal_res_heat failure!\n");
 			return -1;
 		}
 		if(BME680_Transmit(dev, RES_HEAT_0, dev->res_heat_0) != 0)
 		{
-			printf("BME680_Poll: res_heat_0 transmit FAIL!\n");
+			//printf("BME680_Poll: res_heat_0 transmit FAIL!\n");
 			return -1;
 		}	
 	}
@@ -345,12 +345,12 @@ static int BME680_Get_Hum(BME680_HandleTypeDef *dev)
 	/* read MSB then LSB for humidity */
 	if(BME680_Read(dev, HUM_MSB, &msb) != 0)
 	{
-		printf("BME680_Get_Hum: Failed to read HUM_MSB!\n");
+		//printf("BME680_Get_Hum: Failed to read HUM_MSB!\n");
 		return -1;
 	}
 	if(BME680_Read(dev, HUM_LSB, &lsb) != 0)
 	{
-		printf("BME680_Get_Hum: Failed to read HUM_LSB!\n");
+		//printf("BME680_Get_Hum: Failed to read HUM_LSB!\n");
 		return -1;
 	}
 	hum_adc = ((uint16_t)msb << 8) | (uint16_t)lsb;
@@ -397,13 +397,13 @@ static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 	/* get bits <9:2> of gas_adc from GAS_R_MSB<7:0> */
 	if(BME680_Read(dev, GAS_R_MSB, &msb) != 0)
 	{
-		printf("BME680_Get_Gas_R: Failed to read GAS_R_MSB!\n");
+		//printf("BME680_Get_Gas_R: Failed to read GAS_R_MSB!\n");
 		return -1;
 	}
 	/* get bits <1:0> of gas_adc from GAS_R_LSB<7:6> */
 	if(BME680_Read(dev, GAS_R_LSB, &lsb) != 0)
 	{
-		printf("BME680_Get_Gas_R: Failed to read GAS_R_LSB!\n");
+		//printf("BME680_Get_Gas_R: Failed to read GAS_R_LSB!\n");
 		return -1;
 	}
 	gas_adc = ((uint16_t)msb << 2) | (((uint16_t)lsb >> 6) & 0x3U);
@@ -413,7 +413,7 @@ static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 	/* get range_switching_error */
 	if(BME680_Read(dev, (0x04U), &range_switching_error) != 0)
 	{
-		printf("BME_Get_Gas_R: Failed to read RANGE_SWITCHING_ERROR!\n");
+		//printf("BME_Get_Gas_R: Failed to read RANGE_SWITCHING_ERROR!\n");
 		return -1;
 	}
 	
@@ -441,17 +441,17 @@ static int BME680_Get_Press(BME680_HandleTypeDef *dev)
 	/* read MSB, LSB, XLSB for pressure */
 	if(BME680_Read(dev, PRESS_MSB, &msb) != 0)
 	{
-		printf("BME680_Get_Press: Failed to read PRESS_MSB!\n");
+		//printf("BME680_Get_Press: Failed to read PRESS_MSB!\n");
 		return -1;
 	}
 	if(BME680_Read(dev, PRESS_LSB, &lsb) != 0)
 	{
-		printf("BME680_Get_Press: Failed to read PRESS_LSB!\n");
+		//printf("BME680_Get_Press: Failed to read PRESS_LSB!\n");
 		return -1;
 	}
 	if(BME680_Read(dev, PRESS_XLSB, &xlsb) != 0)
 	{
-		printf("BME680_Get_Press: Failed to read PRESS_XLSB!\n");
+		//printf("BME680_Get_Press: Failed to read PRESS_XLSB!\n");
 		return -1;
 	}
 	
@@ -501,17 +501,17 @@ static int BME680_Get_Temp(BME680_HandleTypeDef *dev)
 	/* read MSB, LSB, XLSB for temperature */
 	if(BME680_Read(dev, TEMP_MSB, &msb) != 0)
 	{
-		printf("BME680_Get_Temp: Failed to read TEMP_MSB!\n");
+		//printf("BME680_Get_Temp: Failed to read TEMP_MSB!\n");
 		return -1;
 	}
 	if(BME680_Read(dev, TEMP_LSB, &lsb) != 0)
 	{
-		printf("BME680_Get_Temp: Failed to read TEMP_LSB!\n");
+		//printf("BME680_Get_Temp: Failed to read TEMP_LSB!\n");
 		return -1;
 	}
 	if(BME680_Read(dev, TEMP_XLSB, &xlsb) != 0)
 	{
-		printf("BME680_Get_Temp: Failed to read TEMP_XLSB!\n");
+		//printf("BME680_Get_Temp: Failed to read TEMP_XLSB!\n");
 		return -1;
 	}
 	
@@ -547,7 +547,7 @@ static int BME680_Data_Ready(BME680_HandleTypeDef *dev)
 	uint8_t status;
 	if(BME680_Read(dev, EAS_STATUS_0, &status) != 0)
 	{
-		printf("BME680_Data_Ready: Failed to read EAS_STATUS!\n");
+		//printf("BME680_Data_Ready: Failed to read EAS_STATUS!\n");
 		return -1;
 	}
 	uint8_t new_data = (status & (1 << 7));

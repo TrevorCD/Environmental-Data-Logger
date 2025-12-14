@@ -36,7 +36,6 @@
 #include "stm32f4xx_nucleo.h"
 #include "system_stm32f4xx.h"
 
-#include <stdio.h> /* for printf. _write is overwritten */
 #include "itm.h"
 #include "bme680.h"
 #include "bme680poll.h"
@@ -65,15 +64,17 @@ static void prvSetupSDCard(void);
 
 int main(void)
 {
+	uint32_t tick_priority, sv_priority;
+	uint8_t prio_bits = __NVIC_PRIO_BITS;
     /* Configure the hardware */
     prvSetupHardware();
-	ITM_Init();
+	//ITM_Init();
 	prvSetupBME680();
-	prvSetupSDCard();
+	//prvSetupSDCard();
 	
 	/* Start tasks */
 	vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
-	
+
     /* Start the scheduler. */
     vTaskStartScheduler();
 	
@@ -123,15 +124,6 @@ static void prvSetupBME680(void)
 	
 	if(HAL_I2C_Init(hbme.hi2c) != HAL_OK)
 	{
-		printf("main: FAILED TO INIT I2C\n");
-		for( ; ; )
-		{
-		}
-	}
-	
-	if(BME680_Init(&hbme) != 0)
-	{
-		/* BME680_Init prints it's own error messages */
 		for( ; ; )
 		{
 		}
@@ -168,7 +160,7 @@ static void prvSetupSDCard(void)
 	hspi.Init.CLKPolarity       = SPI_POLARITY_LOW; // CPOL = 0
 	hspi.Init.CLKPhase          = SPI_PHASE_1EDGE; // CPHA = 0 → MODE0
 	hspi.Init.NSS               = SPI_NSS_SOFT; // Use software CS (GPIO)
-	hspi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256; // ~300 kHz
+	hspi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256; // slow for init
 	hspi.Init.FirstBit          = SPI_FIRSTBIT_MSB;
 	hspi.Init.TIMode            = SPI_TIMODE_DISABLE;
 	hspi.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
@@ -176,7 +168,7 @@ static void prvSetupSDCard(void)
 
 	if(HAL_SPI_Init(&hspi) != HAL_OK)
 	{
-		printf("main: FAILED TO INIT SPI\n");
+		//printf("main: FAILED TO INIT SPI\n");
 		for( ; ; )
 		{
 		}
@@ -200,7 +192,7 @@ void vApplicationMallocFailedHook(void)
      * provide information on how the remaining heap might be fragmented). */
     taskDISABLE_INTERRUPTS();
 
-	printf("ATTEMPTED TO MALLOC. MALLOC ALWAYS FAILS! SEE syscalls.c!\n");
+	//printf("ATTEMPTED TO MALLOC. MALLOC ALWAYS FAILS! SEE syscalls.c!\n");
 	
     for(; ;)
     {

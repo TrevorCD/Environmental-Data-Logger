@@ -43,7 +43,8 @@ CFLAGS += -O2 -g -std=c99
 # General Include directories
 CFLAGS += -I. -Iinclude
 
-SRCS += src/main.c src/stubs.c src/itm.c src/syscalls.c
+SRCS += src/main.c src/stubs.c
+# src/itm.c src/syscalls.c
 
 # Linker flags
 LDFLAGS += -T $(FLASH_SCRIPT) -nostartfiles -Wl,--gc-sections -specs=nano.specs
@@ -124,7 +125,7 @@ SRCS += drivers/src/bme680.c
 CFLAGS += -I./drivers/include/
 
 #==================================#
-#        Application Files         #
+#            Task Files            #
 #==================================#
 
 SRCS += tasks/src/bme680poll.c
