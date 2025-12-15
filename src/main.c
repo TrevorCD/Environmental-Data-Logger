@@ -40,6 +40,8 @@
 #include "bme680.h"
 #include "bme680poll.h"
 
+extern void xPortSysTickHandler(void);
+
 /* Task priorities */
 #define mainBME680_POLL_TASK_PRIORITY ( tskIDLE_PRIORITY + 1UL )
 
@@ -51,6 +53,7 @@
 BME680_HandleTypeDef hbme = {0};
 I2C_HandleTypeDef hi2c = {0};
 SPI_HandleTypeDef hspi = {0};
+TIM_HandleTypeDef htim6 = {0};
 
 /*-------------------------------[ Prototypes ]-------------------------------*/
 
@@ -64,8 +67,7 @@ static void prvSetupSDCard(void);
 
 int main(void)
 {
-	uint32_t tick_priority, sv_priority;
-	uint8_t prio_bits = __NVIC_PRIO_BITS;
+
     /* Configure the hardware */
     prvSetupHardware();
 	//ITM_Init();
@@ -85,10 +87,10 @@ int main(void)
 
 static void prvSetupHardware(void)
 {
+	uint32_t priority;
     /* Setup STM32 system (HAL, Clock) */
 	HAL_Init();
 	SystemClock_Config();
-	
     /* Ensure all priority bits are assigned as preemption priority bits. */
     NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 }
@@ -105,7 +107,7 @@ static void prvSetupBME680(void)
 	GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_8;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
 	
 	HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -175,9 +177,14 @@ static void prvSetupSDCard(void)
 	}
 }
 
+void SysTick_Handler(void)
+{
+    xPortSysTickHandler();
+}
+
 void vApplicationTickHook(void)
 {
-	HAL_IncTick();
+	
 }
 
 void vApplicationMallocFailedHook(void)
@@ -229,6 +236,69 @@ void vApplicationStackOverflowHook(TaskHandle_t pxTask,
     }
 }
 
+/* Use TIM6 for HAL timebase instead of SysTick */
+HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
+{
+    RCC_ClkInitTypeDef clkconfig;
+    uint32_t uwTimclock = 0;
+    uint32_t uwPrescalerValue = 0;
+    uint32_t pFLatency;
+    
+    /* Enable TIM6 clock */
+    __HAL_RCC_TIM6_CLK_ENABLE();
+    
+    /* Get clock configuration */
+    HAL_RCC_GetClockConfig(&clkconfig, &pFLatency);
+    
+    /* Compute TIM6 clock */
+    uwTimclock = HAL_RCC_GetPCLK1Freq();
+
+	if(clkconfig.APB1CLKDivider != RCC_HCLK_DIV1)
+	{
+		uwTimclock *= 2;
+	}
+	
+    /* Compute prescaler to get 1MHz timer clock */
+    uwPrescalerValue = (uint32_t)((uwTimclock / 1000000U) - 1U);
+    
+    /* Initialize TIM6 */
+    htim6.Instance = TIM6;
+    htim6.Init.Period = 999U; // 1ms
+    htim6.Init.Prescaler = uwPrescalerValue;
+    htim6.Init.ClockDivision = 0;
+    htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+    
+    if(HAL_TIM_Base_Init(&htim6) != HAL_OK)
+    {
+		return HAL_ERROR;
+	}
+	
+	/* Start timer and enable interrupt */
+	if(HAL_TIM_Base_Start_IT(&htim6) != HAL_OK)
+	{
+		return HAL_ERROR;
+	}
+    
+	/* Set interrupt priority */
+	HAL_NVIC_SetPriority(TIM6_DAC_IRQn, TickPriority, 0);
+	HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
+    
+	return HAL_OK;
+}
+
+void TIM6_DAC_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(&htim6);
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if(htim->Instance == TIM6)
+    {
+        HAL_IncTick();
+    }
+}
+
 static void SystemClock_Config(void)
 {
 	RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
@@ -268,8 +338,8 @@ static void SystemClock_Config(void)
 								   RCC_CLOCKTYPE_PCLK1  | RCC_CLOCKTYPE_PCLK2);
 	
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV8; // was 1
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;  // was 2
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV8;
+	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 	
 	if(HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)

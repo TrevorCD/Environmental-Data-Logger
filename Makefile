@@ -38,7 +38,7 @@ AS := arm-none-eabi-as
 CP := arm-none-eabi-objcopy
 
 # General compilation flags
-CFLAGS += -O2 -g -std=c99
+CFLAGS += -g -std=c99
 
 # General Include directories
 CFLAGS += -I. -Iinclude
@@ -82,7 +82,9 @@ SRCS += src/system_stm32f4xx.c \
         $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c \
         $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c \
         $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c \
-		$(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c
+		$(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c \
+        $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
+        $(STM_DRIVERS)/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
 
 ASM_SRCS += src/startup_stm32f446xx.s
 
