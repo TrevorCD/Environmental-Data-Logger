@@ -136,6 +136,19 @@ SRCS += tasks/src/bme680poll.c \
 CFLAGS += -Itasks/include/
 
 
+#==================================#
+#               FatFS              #
+#==================================#
+
+FAT_FS = ./STM32CubeF4/Middlewares/Third_Party/FatFs/src
+
+SRCS += $(FAT_FS)/diskio.c \
+        $(FAT_FS)/ff.c \
+        $(FAT_FS)/ff_gen_drv.c \
+        $(FAT_FS)/option/syscall.c
+
+CFLAGS += -I$(FAT_FS)
+
 #----------------------------------[ Targets ]----------------------------------
 
 all: main.elf
