@@ -261,7 +261,7 @@
 /      can be opened simultaneously under file lock control. Note that the file
 /      lock control is independent of re-entrancy. */
 
-#define _FS_REENTRANT	0
+#define _FS_REENTRANT	1
 #define _USE_MUTEX	0
 /* Use CMSIS-OS mutexes as _SYNC_t object instead of Semaphores */
 
@@ -279,10 +279,7 @@
 #endif
 
 #else
-#if (osCMSIS < 0x20000U)
-#define _SYNC_t         osSemaphoreId
-#else
-#define	_SYNC_t         osSemaphoreId_t
+#define	_SYNC_t         SemaphoreHandle_t
 #endif
 
 #endif
