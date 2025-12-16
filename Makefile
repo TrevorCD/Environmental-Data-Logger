@@ -130,7 +130,9 @@ CFLAGS += -I./drivers/include/
 #            Task Files            #
 #==================================#
 
-SRCS += tasks/src/bme680poll.c
+SRCS += tasks/src/bme680poll.c \
+        tasks/src/sdcard.c
+
 CFLAGS += -Itasks/include/
 
 

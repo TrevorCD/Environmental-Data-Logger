@@ -36,15 +36,15 @@
 #include "stm32f4xx_nucleo.h"
 #include "system_stm32f4xx.h"
 
-#include "itm.h"
 #include "bme680.h"
 #include "bme680poll.h"
+#include "sdcard.h"
 
 extern void xPortSysTickHandler(void);
 
 /* Task priorities */
-#define mainBME680_POLL_TASK_PRIORITY ( tskIDLE_PRIORITY + 1UL )
-
+#define mainBME680_POLL_TASK_PRIORITY  ( tskIDLE_PRIORITY + 1UL )
+#define mainSDCARD_WRITE_TASK_PRIORITY ( tskIDLE_PRIORITY + 2UL )
 /* A block time of zero simply means "don't block". */
 #define mainDONT_BLOCK                             (0UL)
 
@@ -71,12 +71,13 @@ int main(void)
     /* Configure the hardware */
     prvSetupHardware();
 	//ITM_Init();
-	prvSetupBME680();
-	//prvSetupSDCard();
+	//prvSetupBME680();
+	prvSetupSDCard();
 	
 	/* Start tasks */
-	vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
-
+	//vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
+	vStartSDCardWriteTask(mainSDCARD_WRITE_TASK_PRIORITY);
+	
     /* Start the scheduler. */
     vTaskStartScheduler();
 	
@@ -132,10 +133,19 @@ static void prvSetupBME680(void)
 	}
 }
 
+/* Pins used:
+ * SCK:  PA_5 (D13)
+ * MISO: PA_6 (D12)
+ * MOSI: PA_7 (D11)
+ * CS:   PB_6 (D10)
+ * DET:  PC_7 (D9)
+ */
 static void prvSetupSDCard(void)
 {
 	/* Enable clocks */
 	__HAL_RCC_GPIOA_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
+	__HAL_RCC_GPIOC_CLK_ENABLE();
 	__HAL_RCC_SPI1_CLK_ENABLE();
 
     /* PA5 SCK, PA6 MISO, PA7 MOSI */
@@ -147,14 +157,22 @@ static void prvSetupSDCard(void)
 	GPIO_Init.Alternate = GPIO_AF5_SPI1;
 	HAL_GPIO_Init(GPIOA, &GPIO_Init);
 
-    /* PA4 CS as GPIO output */
-	GPIO_Init.Pin = GPIO_PIN_4;
+    /* PB6 CS as GPIO output */
+	GPIO_Init.Pin = GPIO_PIN_6;
 	GPIO_Init.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_Init.Pull = GPIO_NOPULL;
 	GPIO_Init.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIOA, &GPIO_Init);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET); // CS idle high
+	HAL_GPIO_Init(GPIOB, &GPIO_Init);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET); // CS idle high
 
+	/* PC7 DET */
+	GPIO_Init.Pin = GPIO_PIN_7;
+	GPIO_Init.Mode = GPIO_MODE_INPUT;
+	GPIO_Init.Pull = GPIO_NOPULL;
+	GPIO_Init.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOC, &GPIO_Init);
+
+	
 	hspi.Instance               = SPI1;
 	hspi.Init.Mode              = SPI_MODE_MASTER;
 	hspi.Init.Direction         = SPI_DIRECTION_2LINES;
@@ -236,6 +254,7 @@ void vApplicationStackOverflowHook(TaskHandle_t pxTask,
     }
 }
 
+static uint8_t tick_initialized = 0;
 /* Use TIM6 for HAL timebase instead of SysTick */
 HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
 {
@@ -243,7 +262,7 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
     uint32_t uwTimclock = 0;
     uint32_t uwPrescalerValue = 0;
     uint32_t pFLatency;
-    
+	
     /* Enable TIM6 clock */
     __HAL_RCC_TIM6_CLK_ENABLE();
     
@@ -260,7 +279,29 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
 	
     /* Compute prescaler to get 1MHz timer clock */
     uwPrescalerValue = (uint32_t)((uwTimclock / 1000000U) - 1U);
-    
+
+	/* If already initialized, just update the prescaler and period */
+    if(tick_initialized)
+    {
+        /* Stop the timer */
+        HAL_TIM_Base_Stop_IT(&htim6);
+        
+        /* Update prescaler and period for new clock speed */
+        htim6.Init.Prescaler = uwPrescalerValue;
+        htim6.Init.Period = 999;
+        
+        /* Reinitialize */
+        if(HAL_TIM_Base_Init(&htim6) != HAL_OK)
+        {
+            return HAL_ERROR;
+        }
+        
+        /* Restart */
+        HAL_TIM_Base_Start_IT(&htim6);
+        
+        return HAL_OK;
+    }
+	
     /* Initialize TIM6 */
     htim6.Instance = TIM6;
     htim6.Init.Period = 999U; // 1ms
