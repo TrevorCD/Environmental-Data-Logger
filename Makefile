@@ -140,7 +140,7 @@ CFLAGS += -Itasks/include/
 #               FatFS              #
 #==================================#
 
-FAT_FS = ./STM32CubeF4/Middlewares/Third_Party/FatFs/src
+FAT_FS = ./FatFS/src
 
 SRCS += $(FAT_FS)/diskio.c \
         $(FAT_FS)/ff.c \
