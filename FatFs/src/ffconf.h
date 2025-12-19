@@ -119,7 +119,7 @@
 */
 
 
-#define	_USE_LFN	3
+#define	_USE_LFN	1
 #define	_MAX_LFN	255
 /* The _USE_LFN switches the support of long file name (LFN).
 /
@@ -261,13 +261,14 @@
 /      can be opened simultaneously under file lock control. Note that the file
 /      lock control is independent of re-entrancy. */
 
-#define _FS_REENTRANT	1
+#define _FS_REENTRANT	0
 #define _USE_MUTEX	0
 /* Use CMSIS-OS mutexes as _SYNC_t object instead of Semaphores */
 
 #if _FS_REENTRANT
 
-#include "cmsis_os.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
 #define _FS_TIMEOUT		1000
 
 #if _USE_MUTEX
@@ -282,7 +283,7 @@
 #define	_SYNC_t         SemaphoreHandle_t
 #endif
 
-#endif
+//#endif
 #endif //_FS_REENTRANT
 /* The option _FS_REENTRANT switches the re-entrancy (thread safe) of the FatFs
 /  module itself. Note that regardless of this option, file access to different

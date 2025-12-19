@@ -5,20 +5,25 @@
 #include "sdcard.h"
 #include "stm32f4xx_hal_spi.h"
 #include "stm32f4xx_hal_gpio.h"
+#include "ff.h"
 
-static portTASK_FUNCTION_PROTO( vSDCardWriteTask, pvParameters );
+#define FOREVER for( ; ; )
 
-extern SPI_HandleTypeDef hspi;
+/* Pins */
+#define SCK  GPIOA, GPIO_PIN_5
+#define MISO GPIOA, GPIO_PIN_6
+#define MOSI GPIOA, GPIO_PIN_7
+#define CS   GPIOB, GPIO_PIN_6
+#define DET  GPIOC, GPIO_PIN_7
 
 #define sdcardSTACK_SIZE ((unsigned short) 512)
 
-/* Pins used:
- * SCK:  PA_5 (D13) 
- * MISO: PA_6 (D12) 
- * MOSI: PA_7 (D11) 
- * CS:   PB_6 (D10) 
- * DET:  PC_7 (D9)  Connected to GND. Pulled up to 3.3V on chip insert
- */
+/* Globals -------------------------------------------------------------------*/
+extern SPI_HandleTypeDef hspi;
+
+/* Private Prototypes ------------------------------------------------------- */
+static portTASK_FUNCTION_PROTO( vSDCardWriteTask, pvParameters );
+static void Error_Handler( void );
 
 void vStartSDCardWriteTask( UBaseType_t uxPriority )
 {
@@ -27,22 +32,79 @@ void vStartSDCardWriteTask( UBaseType_t uxPriority )
 }
 
 static portTASK_FUNCTION( vSDCardWriteTask, pvParameters )
-{
-	uint8_t test_tx = 0xAA;
-	uint8_t test_rx = 0x00;
+{	
+	FATFS fs;
+	FIL fil;
+	FRESULT fres;
+	UINT bytesWritten;
 	
-	uint8_t status;
-	
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // CS low
-	HAL_SPI_TransmitReceive(&hspi, &test_tx, &test_rx, 1, 100);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // CS high
-
-	if(test_rx == 0xAA) {
-		status = 0;
-	} else {
-		status = 1;
+	if( HAL_GPIO_ReadPin( DET ) != GPIO_PIN_SET )
+	{
+		/* SD CARD NOT INSERTED! */
+		vTaskDelete( NULL );
 	}
+	
+    /* Mount the file system */
+    fres = f_mount(&fs, "", 1);  // "" = logical drive 0, 1 = mount now
+    
+    if(fres != FR_OK)
+	{
+        // Mount failed - check error code
+        // FR_DISK_ERR = hardware problem
+        if(fres == FR_DISK_ERR)
+		{
+			Error_Handler();
+		}
+		// FR_NO_FILESYSTEM = needs formatting
+		else if(fres == FR_NO_FILESYSTEM)
+		{
+			BYTE work[_MAX_SS];  // Work area for formatting
+			fres = f_mkfs("", FM_FAT32, 0, work, sizeof(work));    
+			if(fres != FR_OK)
+			{
+				Error_Handler();
+			}
+		
+			// Try mounting again
+			fres = f_mount(&fs, "", 1);
+			if(fres != FR_OK)
+			{
+				Error_Handler();
+			}
+		}
+		// other errors
+		else
+		{
+			Error_Handler();
+		}
+    }
+	/* Successfully mounted! */
+        
+	/* Create/open a file for writing */
+	fres = f_open(&fil, "data.txt",
+				  FA_CREATE_ALWAYS | FA_OPEN_APPEND | FA_WRITE);
+	if(fres != FR_OK)
+	{
+		/* Not sure what would be wrong */
+		Error_Handler();
+	}
+    
+    FOREVER
+	{
+		/* Wait on binary sem for enviro data */
+		
+		/* Write data to SD Card */
+		const char *text = "Hello from STM32 + FreeRTOS!\n";
+		fres = f_write(&fil, text, sizeof(text), &bytesWritten);
+        
+    }
 
-	vTaskDelete(NULL);
+	f_close(&fil);
+	vTaskDelete( NULL );
+}
+
+static void Error_Handler( void )
+{
+	FOREVER { }
 }
 

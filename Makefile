@@ -49,9 +49,6 @@ SRCS += src/main.c src/stubs.c
 # Linker flags
 LDFLAGS += -T $(FLASH_SCRIPT) -nostartfiles -Wl,--gc-sections -specs=nano.specs
 
-# ASM files not included in OBJS. Prevents 'make clean' from deleting .s files.
-OBJS = $(SRCS:.c=.o)
-
 
 #==================================#
 #     STM32F446RE Compilation      #
@@ -140,14 +137,20 @@ CFLAGS += -Itasks/include/
 #               FatFS              #
 #==================================#
 
-FAT_FS = ./FatFS/src
+FAT_FS := ./FatFs/src
 
 SRCS += $(FAT_FS)/diskio.c \
         $(FAT_FS)/ff.c \
         $(FAT_FS)/ff_gen_drv.c \
-        $(FAT_FS)/option/syscall.c
+        $(FAT_FS)/option/syscall.c \
+        $(FAT_FS)/option/ccsbcs.c
 
 CFLAGS += -I$(FAT_FS)
+
+
+# ASM files not included in OBJS. Prevents 'make clean' from deleting .s files.
+OBJS = $(SRCS:.c=.o)
+
 
 #----------------------------------[ Targets ]----------------------------------
 
