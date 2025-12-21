@@ -1,13 +1,19 @@
-//#include <stdio.h>
-#include "stm32f4xx_hal.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "sdcard.h"
+
+/* Hardware Includes */
+#include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_spi.h"
 #include "stm32f4xx_hal_gpio.h"
-#include "ff.h"
 
-#define FOREVER for( ; ; )
+/* FatFs Includes */
+#include "ff_gen_drv.h"
+#include "ff.h"
+/* Custom SPI driver under FatFs layer */
+#include "sd_spi.h"
+
+#define forever for(; ;)
 
 /* Pins */
 #define SCK  GPIOA, GPIO_PIN_5
@@ -16,32 +22,39 @@
 #define CS   GPIOB, GPIO_PIN_6
 #define DET  GPIOC, GPIO_PIN_7
 
-#define sdcardSTACK_SIZE ((unsigned short) 512)
+#define sdcardSTACK_SIZE ((unsigned short) 1024)
 
 /* Globals -------------------------------------------------------------------*/
-extern SPI_HandleTypeDef hspi;
+extern SPI_HandleTypeDef hspi; /* from main.c */
+extern Diskio_drvTypeDef SD_SPI_Driver;
 
-/* Private Prototypes ------------------------------------------------------- */
-static portTASK_FUNCTION_PROTO( vSDCardWriteTask, pvParameters );
-static void Error_Handler( void );
+/* Private Prototypes --------------------------------------------------------*/
+static portTASK_FUNCTION_PROTO(vSDCardWriteTask, pvParameters);
+static void Error_Handler(void);
 
-void vStartSDCardWriteTask( UBaseType_t uxPriority )
+void vStartSDCardWriteTask(UBaseType_t uxPriority)
 {
-	xTaskCreate( vSDCardWriteTask, "SDWrite", sdcardSTACK_SIZE, NULL,
-				 uxPriority, ( TaskHandle_t * ) NULL );
+	xTaskCreate(vSDCardWriteTask, "SDWrite", sdcardSTACK_SIZE, NULL,
+				 uxPriority, (TaskHandle_t *)NULL);
 }
 
-static portTASK_FUNCTION( vSDCardWriteTask, pvParameters )
+static portTASK_FUNCTION(vSDCardWriteTask, pvParameters)
 {	
 	FATFS fs;
 	FIL fil;
 	FRESULT fres;
 	UINT bytesWritten;
+	char SDPath[4];
 	
-	if( HAL_GPIO_ReadPin( DET ) != GPIO_PIN_SET )
+	if(HAL_GPIO_ReadPin(DET) != GPIO_PIN_SET)
 	{
 		/* SD CARD NOT INSERTED! */
-		vTaskDelete( NULL );
+		Error_Handler();
+	}
+
+	if(FATFS_LinkDriver(&SD_SPI_Driver, SDPath) != 0)
+	{
+		Error_Handler();
 	}
 	
     /* Mount the file system */
@@ -89,7 +102,7 @@ static portTASK_FUNCTION( vSDCardWriteTask, pvParameters )
 		Error_Handler();
 	}
     
-    FOREVER
+    forever
 	{
 		/* Wait on binary sem for enviro data */
 		
@@ -100,11 +113,11 @@ static portTASK_FUNCTION( vSDCardWriteTask, pvParameters )
     }
 
 	f_close(&fil);
-	vTaskDelete( NULL );
+	vTaskDelete(NULL);
 }
 
-static void Error_Handler( void )
+static void Error_Handler(void)
 {
-	FOREVER { }
+	forever { }
 }
 

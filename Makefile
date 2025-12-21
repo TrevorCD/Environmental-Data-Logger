@@ -143,9 +143,12 @@ SRCS += $(FAT_FS)/diskio.c \
         $(FAT_FS)/ff.c \
         $(FAT_FS)/ff_gen_drv.c \
         $(FAT_FS)/option/syscall.c \
-        $(FAT_FS)/option/ccsbcs.c
+        $(FAT_FS)/option/ccsbcs.c \
+        $(FAT_FS)/sd/sd_spi.c \
+        $(FAT_FS)/sd/sd_spi_diskio.c
 
-CFLAGS += -I$(FAT_FS)
+CFLAGS += -I$(FAT_FS) \
+          -I$(FAT_FS)/sd
 
 
 # ASM files not included in OBJS. Prevents 'make clean' from deleting .s files.
