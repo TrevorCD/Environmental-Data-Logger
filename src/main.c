@@ -156,7 +156,7 @@ static void prvSetupSDCard(void)
 	GPIO_Init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 	GPIO_Init.Alternate = GPIO_AF5_SPI1;
 	HAL_GPIO_Init(GPIOA, &GPIO_Init);
-
+	
     /* PB6 CS as GPIO output */
 	GPIO_Init.Pin = GPIO_PIN_6;
 	GPIO_Init.Mode = GPIO_MODE_OUTPUT_PP;
@@ -188,7 +188,6 @@ static void prvSetupSDCard(void)
 
 	if(HAL_SPI_Init(&hspi) != HAL_OK)
 	{
-		//printf("main: FAILED TO INIT SPI\n");
 		for( ; ; )
 		{
 		}
@@ -216,8 +215,6 @@ void vApplicationMallocFailedHook(void)
      * to query the size of free heap space that remains (although it does not
      * provide information on how the remaining heap might be fragmented). */
     taskDISABLE_INTERRUPTS();
-
-	//printf("ATTEMPTED TO MALLOC. MALLOC ALWAYS FAILS! SEE syscalls.c!\n");
 	
     for(; ;)
     {
