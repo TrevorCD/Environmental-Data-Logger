@@ -35,6 +35,7 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_nucleo.h"
 #include "system_stm32f4xx.h"
+#include "stm32f4xx_hal_rcc.h"
 
 #include "bme680.h"
 #include "bme680poll.h"
@@ -172,6 +173,10 @@ static void prvSetupSDCard(void)
 	GPIO_Init.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOC, &GPIO_Init);
 
+	/* Reset SPI peripheral */
+	__HAL_RCC_SPI1_FORCE_RESET();
+	HAL_Delay(2);
+	__HAL_RCC_SPI1_RELEASE_RESET();
 	
 	hspi.Instance               = SPI1;
 	hspi.Init.Mode              = SPI_MODE_MASTER;

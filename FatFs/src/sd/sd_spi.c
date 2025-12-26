@@ -35,8 +35,8 @@ static uint8_t SD_SendCommand(uint8_t cmd, uint32_t arg)
     uint8_t crc = 0x01;
     
     if(cmd == CMD0) crc = 0x95;
-    if(cmd == CMD8) crc = 0x87;
-    
+    else if(cmd == CMD8) crc = 0x87;
+	
     SD_CS_Low();
     
     SD_SendByte(0x40 | cmd);
@@ -58,15 +58,23 @@ static uint8_t SD_SendCommand(uint8_t cmd, uint32_t arg)
 
 uint8_t SD_Init(void)
 {
+	uint8_t response = 0xFF;
+
+	/* sanity check */
+	if(g_hspi == NULL)
+	{
+		for( ; ; ) { }
+	}
     /* Power-up sequence */
     SD_CS_High();
     for(int i = 0; i < 10; i++)
 	{
         SD_SendByte(0xFF);
     }
-    
+	
     /* CMD0: GO_IDLE_STATE */
-    if(SD_SendCommand(CMD0, 0) != 0x01)
+	response = SD_SendCommand(CMD0, 0);
+    if(response != 0x01)
 	{
         SD_CS_High();
         return 1;
