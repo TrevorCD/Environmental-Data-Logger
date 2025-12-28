@@ -67,6 +67,12 @@ STM32 configuration tool for initializing peripherals and middleware
 **STM32 HAL drivers** v1.8.5  
 Vendor-provided abstraction layer for STM32 Boards
 
+## Block Diagram
+
+<div width="100%">
+  <img align="center" src="doc/img/BlockDiagram.png" width="100%"/>
+</div>
+
 ##  FreeRTOS Task Layout:
 - **Environmental Sensor Task**
   - Waits on a binary semaphore that is given by the ISR when new data is ready
