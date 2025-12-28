@@ -73,6 +73,12 @@ Vendor-provided abstraction layer for STM32 Boards
   <img align="center" src="doc/img/BlockDiagram.png" width="100%"/>
 </div>
 
+## Circuit Diagram
+
+<div width="100%">
+  <img align="center" src="doc/img/circuit.png" width="100%"/>
+</div>
+
 ##  FreeRTOS Task Layout:
 - **Environmental Sensor Task**
   - Waits on a binary semaphore that is given by the ISR when new data is ready
