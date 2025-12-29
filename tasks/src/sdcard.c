@@ -23,6 +23,7 @@
 #define DET  GPIOC, GPIO_PIN_7
 
 #define sdcardSTACK_SIZE ((unsigned short) 1024)
+#define sdcardPriority (configMAX_PRIORITIES - 3)
 
 /* Globals -------------------------------------------------------------------*/
 extern SPI_HandleTypeDef hspi; /* from main.c */
@@ -42,7 +43,7 @@ static uint32_t str_len(const char *text)
 void vStartSDCardWriteTask(UBaseType_t uxPriority)
 {
 	xTaskCreate(vSDCardWriteTask, "SDWrite", sdcardSTACK_SIZE, NULL,
-				 uxPriority, (TaskHandle_t *)NULL);
+				 sdcardPriority, (TaskHandle_t *)NULL);
 }
 
 static portTASK_FUNCTION(vSDCardWriteTask, pvParameters)

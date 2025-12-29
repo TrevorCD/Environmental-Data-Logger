@@ -9,6 +9,7 @@
 #include "bme680.h"
 
 #define bme680STACK_SIZE (configMINIMAL_STACK_SIZE * 2)
+#define bme680Priority (configMAX_PRIORITIES - 2)
 
 static portTASK_FUNCTION_PROTO( vBME680PollTask, pvParameters );
 
@@ -20,7 +21,7 @@ void vStartBME680PollTask( UBaseType_t uxPriority )
 {
 	
 	xTaskCreate( vBME680PollTask, "BME680Poll", bme680STACK_SIZE, NULL,
-				 uxPriority, ( TaskHandle_t * ) NULL );
+				 bme680Priority, ( TaskHandle_t * ) NULL );
 }
 
 /*-----------------------------------------------------------*/
