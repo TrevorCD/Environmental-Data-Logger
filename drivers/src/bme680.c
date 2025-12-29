@@ -30,7 +30,7 @@
 /*----------------------------------------------------------------------------*/
 
 #define TARGET_TEMP    300
-#define AMB_TEMP       25 /* Initial ambient temperature */
+#define AMB_TEMP       2500 /* Initial ambient temperature */
 
 /* I2C GPIO Pins */
 #define BME680_SDA     GPIO_PIN_9
@@ -603,10 +603,10 @@ static int BME680_Read_2(BME680_HandleTypeDef *dev, uint8_t msb, uint8_t lsb,
  * The BME680 writes data to reg. */
 static int BME680_Transmit(BME680_HandleTypeDef *dev, uint8_t reg, uint8_t data)
 {
-	uint8_t msg[2];
-	msg[0] = reg;
-	msg[1] = data;
-	if(HAL_I2C_Master_Transmit_DMA(dev->hi2c, SLAVE_ADDR, msg, 2) != HAL_OK)
+	HAL_StatusTypeDef status;
+	uint8_t msg[2] = {reg, data};
+	status = HAL_I2C_Master_Transmit(dev->hi2c, SLAVE_ADDR, msg, 2, 1000);
+	if(status != HAL_OK)
 	{
 		return -1;
 	}

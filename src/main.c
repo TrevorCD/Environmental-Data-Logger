@@ -72,11 +72,11 @@ int main(void)
     /* Configure the hardware */
     prvSetupHardware();
 	//ITM_Init();
-	//prvSetupBME680();
+	prvSetupBME680();
 	prvSetupSDCard();
 	
 	/* Start tasks */
-	//vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
+	vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
 	vStartSDCardWriteTask(mainSDCARD_WRITE_TASK_PRIORITY);
 	
     /* Start the scheduler. */
