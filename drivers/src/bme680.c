@@ -29,8 +29,8 @@
 
 /*----------------------------------------------------------------------------*/
 
-#define TARGET_TEMP    300
-#define AMB_TEMP       2500 /* Initial ambient temperature */
+#define TARGET_TEMP    30000 /* 300 Celsius */
+#define AMB_TEMP       2500  /* Initial ambient temperature */
 
 /* I2C GPIO Pins */
 #define BME680_SDA     GPIO_PIN_9
