@@ -55,7 +55,7 @@ BME680_HandleTypeDef hbme = {0};
 I2C_HandleTypeDef hi2c = {0};
 SPI_HandleTypeDef hspi = {0};
 TIM_HandleTypeDef htim6 = {0};
-
+QueueHandle_t queue = {0};
 /*-------------------------------[ Prototypes ]-------------------------------*/
 
 static void prvSetupHardware(void);
@@ -71,9 +71,15 @@ int main(void)
 
     /* Configure the hardware */
     prvSetupHardware();
-	//ITM_Init();
 	prvSetupBME680();
 	prvSetupSDCard();
+
+    queue = xQueueCreate(10, sizeof(BME680_OutputTypeDef));    
+    if(queue == NULL)
+    {
+        /* Queue creation failed - not enough heap */
+        for(;;) { }
+    }
 	
 	/* Start tasks */
 	vStartBME680PollTask(mainBME680_POLL_TASK_PRIORITY);
