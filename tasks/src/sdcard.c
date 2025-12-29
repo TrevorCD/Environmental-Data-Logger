@@ -154,14 +154,14 @@ static uint8_t i32toa(uint32_t num, uint8_t *buf)
 	uint32_t len = 0;
 	/* convert numbers to string with lsd on lhs of buf */
 	/* loop through number, removing decimal digit starting from 1s place */
-	for(int i = 11; i > 1; i++)
+	for(int i = 11; i > 1; i--)
 	{
 		len++;
 		x = num % primary_divisor; /* remove more significant digits */
 		x /= secondary_divisor;    /* decimal shift to one's place */
 		buf[i] = ((uint8_t)x) + ASCII_OFFSET;
 
-		if(x / primary_divisor == 0)
+		if(num / primary_divisor == 0)
 		{
 			/* No more digits */
 			break;
@@ -170,15 +170,13 @@ static uint8_t i32toa(uint32_t num, uint8_t *buf)
 		primary_divisor *= 10;
 		secondary_divisor *= 10;
 	}
-	/* reverse buf */
-	uint8_t swap;
-	for(int i = 0; i < 6; i++)
+	int j = 0;
+	for(int i = len; i > 0; i--)
 	{
-		swap = buf[i];
-		buf[i] = buf[11-i];
-		buf[11-i] = swap;
+		buf[j] = buf[12-i];
+		buf[12-i] = 0;
+		j++;
 	}
-	
 	return len;
 }
 
