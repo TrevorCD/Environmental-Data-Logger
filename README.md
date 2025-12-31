@@ -9,8 +9,15 @@ This system records humidity, temperature, air pressure, and gas resistance from
 the BME680, on a configurable interval, and writes the data to a micro sd card
 in this CSV format:
 
-time (milliseconds), humidity (% * 100,000), temperature (centigrade),
+time (seconds), humidity (% * 100,000), temperature (centigrade),
 pressure (pascals), gas resistance (ohms)
+
+### Config
+
+In include/config.h, `configBME680_POLL_INTERVAL` controls the time 
+(in milliseconds) between each poll of the BME680, and,
+`configSD_FILE_NAME` controls the name of the file the output data is written
+to.
 
 ## Hardware Components
 ### NUCLEO-64 STM32F446RE EVAL BRD
