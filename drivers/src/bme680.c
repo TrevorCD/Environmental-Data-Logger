@@ -100,7 +100,7 @@
 #define TEMP_MSB       (0x22U)
 #define PRESS_XLSB     (0x21U) /* ONLY <7:4> */
 #define PRESS_LSB      (0x20U)
-#define PRESS_MSB      (0x20U)
+#define PRESS_MSB      (0x1FU)
 
 /* Oversampling values */
 #define OVERSAMPLE_H   (0b001)
@@ -269,7 +269,7 @@ int BME680_Poll(BME680_HandleTypeDef *dev)
 	}
 
 	/* 100 ms delay to wait for heat up duration */
-	HAL_Delay(100);
+	HAL_Delay(140);
 	
 	/* wait for new data */
 	while((eas_status = BME680_Data_Ready(dev)) != 1)
@@ -363,7 +363,7 @@ static int BME680_Get_Hum(BME680_HandleTypeDef *dev)
 
 static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 {
-	uint8_t msb, lsb, gas_range, range_switching_error;
+	uint8_t msb, lsb, gas_range;
 	uint16_t gas_adc; /* raw gas resistance value */
 
 	/* hardcoded const_array1_int and const_array2_int from datasheet page 23 */
@@ -389,14 +389,8 @@ static int BME680_Get_Gas_R(BME680_HandleTypeDef *dev)
 	
 	gas_range = lsb & 0xFU; /* gas_range is bits <3:0> of GAS_R_LSB */
 	
-	/* get range_switching_error */
-	if(BME680_Read(dev, (0x04U), &range_switching_error) != 0)
-	{
-		return -1;
-	}
-	
 	/* following code is from BME680 datasheet page 23 */
-	int64_t var1 = (int64_t)(((1340 + (5 * (int64_t)range_switching_error)) *
+	int64_t var1 = (int64_t)(((1340 + (5 * (int64_t)dev->calib.range_sw_err)) *
 							  ((int64_t)const_array1_int[gas_range])) >> 16);
 	int64_t var2 = (int64_t)(gas_adc << 15) - (int64_t)(1 << 24) + var1;
 	int32_t gas_res = (int32_t)
@@ -588,75 +582,96 @@ static int BME680_Transmit(BME680_HandleTypeDef *dev, uint8_t reg, uint8_t data)
 
 static int BME680_Get_Calibration(BME680_HandleTypeDef *dev)
 {
-	uint8_t par_temp; /* temporary var for reading unaligned 2 byte params */
+    uint8_t temp_u8;
+    uint16_t temp_u16;
+    
+    /* Read par_t1-3 */
+    if(BME680_Read_2(dev, PAR_T1_MSB, PAR_T1_LSB, &dev->calib.par_t1) != 0)
+        return -1;
+    if(BME680_Read_2(dev, PAR_T2_MSB, PAR_T2_LSB, &temp_u16) != 0)
+        return -1;
+    dev->calib.par_t2 = (int16_t)temp_u16;
+    if(BME680_Read(dev, PAR_T3, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_t3 = (int8_t)temp_u8; 
+    
+    /* read par_p1-10 */
+    if(BME680_Read_2(dev, PAR_P1_MSB, PAR_P1_LSB, &dev->calib.par_p1) != 0)
+        return -1;
+    if(BME680_Read_2(dev, PAR_P2_MSB, PAR_P2_LSB, &temp_u16) != 0)
+        return -1;
+    dev->calib.par_p2 = (int16_t)temp_u16;
+    if(BME680_Read(dev, PAR_P3, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_p3 = (int8_t)temp_u8;
+    if(BME680_Read_2(dev, PAR_P4_MSB, PAR_P4_LSB, &temp_u16) != 0)
+        return -1;
+    dev->calib.par_p4 = (int16_t)temp_u16;
+    if(BME680_Read_2(dev, PAR_P5_MSB, PAR_P5_LSB, &temp_u16) != 0)
+        return -1;
+    dev->calib.par_p5 = (int16_t)temp_u16;
+    if(BME680_Read(dev, PAR_P6, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_p6 = (int8_t)temp_u8;
+    if(BME680_Read(dev, PAR_P7, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_p7 = (int8_t)temp_u8;
+    if(BME680_Read_2(dev, PAR_P8_MSB, PAR_P8_LSB, &temp_u16) != 0)
+        return -1;
+    dev->calib.par_p8 = (int16_t)temp_u16;
+    if(BME680_Read_2(dev, PAR_P9_MSB, PAR_P9_LSB, &temp_u16) != 0)
+        return -1;
+    dev->calib.par_p9 = (int16_t)temp_u16;
+    if(BME680_Read(dev, PAR_P10, &dev->calib.par_p10) != 0)
+        return -1;
+    
+    /* read par_h1-7 */
+    if(BME680_Read(dev, PAR_H1_LSB, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_h1 = ((uint16_t)temp_u8 & 0xFU);
+    if(BME680_Read(dev, PAR_H1_MSB, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_h1 |= ((uint16_t)temp_u8 << 4);
+    if(BME680_Read(dev, PAR_H2_LSB, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_h2 = ((uint16_t)temp_u8 >> 4) & 0xFU;
+    if(BME680_Read(dev, PAR_H2_MSB, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_h2 |= ((uint16_t)temp_u8 << 4);
+    if(BME680_Read(dev, PAR_H3, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_h3 = (int8_t)temp_u8;
+    if(BME680_Read(dev, PAR_H4, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_h4 = (int8_t)temp_u8;
+    if(BME680_Read(dev, PAR_H5, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_h5 = (int8_t)temp_u8;
+    if(BME680_Read(dev, PAR_H6, &dev->calib.par_h6) != 0)
+        return -1;
+    if(BME680_Read(dev, PAR_H7, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_h7 = (int8_t)temp_u8;
+    
+    /* Read par_g1-3 */
+    if(BME680_Read(dev, PAR_G1, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_g1 = (int8_t)temp_u8;
+    if(BME680_Read_2(dev, PAR_G2_MSB, PAR_G2_LSB, &temp_u16) != 0)
+        return -1;
+    dev->calib.par_g2 = (int16_t)temp_u16;
+    if(BME680_Read(dev, PAR_G3, &temp_u8) != 0)
+        return -1;
+    dev->calib.par_g3 = (int8_t)temp_u8;
 	
-	/* Read par_t1-3 */
-	if(BME680_Read_2(dev, PAR_T1_MSB, PAR_T1_LSB, &dev->calib.par_t1) != 0)
+	/* get range_switching_error */
+	if(BME680_Read(dev, (0x04U), &temp_u8) != 0)
 		return -1;
-	if(BME680_Read_2(dev, PAR_T2_MSB, PAR_T2_LSB, &dev->calib.par_t2) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_T3, &dev->calib.par_t3) != 0)
-		return -1;
+	dev->calib.range_sw_err = (int8_t)(temp_u8 >> 4);
 	
-	/* read par_p1-10 */
-	if(BME680_Read_2(dev, PAR_P1_MSB, PAR_P1_LSB, &dev->calib.par_p1) != 0)
-		return -1;
-	if(BME680_Read_2(dev, PAR_P2_MSB, PAR_P2_LSB, &dev->calib.par_p2) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_P3, &dev->calib.par_p3) != 0)
-		return -1;
-	if(BME680_Read_2(dev, PAR_P4_MSB, PAR_P4_LSB, &dev->calib.par_p4) != 0)
-		return -1;
-	if(BME680_Read_2(dev, PAR_P5_MSB, PAR_P5_LSB, &dev->calib.par_p5) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_P6, &dev->calib.par_p6) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_P7, &dev->calib.par_p7) != 0)
-		return -1;
-	if(BME680_Read_2(dev, PAR_P8_MSB, PAR_P8_LSB, &dev->calib.par_p8) != 0)
-		return -1;
-	if(BME680_Read_2(dev, PAR_P9_MSB, PAR_P9_LSB, &dev->calib.par_p9) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_P10, &dev->calib.par_p10) != 0)
-		return -1;
-
-	/* read par_h1-7 */
-	if(BME680_Read(dev, PAR_H1_LSB, &par_temp) != 0)
-		return -1;
-	dev->calib.par_h1 = ((uint16_t)par_temp & 0xFU);
-	if(BME680_Read(dev, PAR_H1_MSB, &par_temp) != 0)
-		return -1;
-	dev->calib.par_h1 |= ((uint16_t)par_temp << 4);
-
-	if(BME680_Read(dev, PAR_H2_LSB, &par_temp) != 0)
-		return -1;
-	dev->calib.par_h2 = ((uint16_t)par_temp >> 4) & 0xFU;
-	if(BME680_Read(dev, PAR_H2_MSB, &par_temp) != 0)
-		return -1;
-	dev->calib.par_h2 |= ((uint16_t)par_temp << 4);
-
-	if(BME680_Read(dev, PAR_H3, &dev->calib.par_h3) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_H4, &dev->calib.par_h4) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_H5, &dev->calib.par_h5) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_H6, &dev->calib.par_h6) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_H7, &dev->calib.par_h7) != 0)
-		return -1;
-	
-	/* Read par_g1-3 */
-	if(BME680_Read(dev, PAR_G1, &dev->calib.par_g1) != 0)
-		return -1;
-	if(BME680_Read_2(dev, PAR_G2_MSB, PAR_G2_LSB, &dev->calib.par_g2) != 0)
-		return -1;
-	if(BME680_Read(dev, PAR_G3, &dev->calib.par_g3) != 0)
-		return -1;
-	
-	return 0;
+    return 0;
 }
- 
+
 /*----------------------------------------------------------------------------*/
  
 /* places value to be written to res_heat_x in 'output' */

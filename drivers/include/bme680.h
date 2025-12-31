@@ -37,31 +37,34 @@ typedef struct {
 typedef struct {
 	/* temperature */
 	uint16_t par_t1;
-	uint16_t par_t2;
-	uint8_t  par_t3;
+	int16_t par_t2;
+	int8_t  par_t3;
 	/* pressure */
 	uint16_t par_p1;
-	uint16_t par_p2;
-	uint8_t  par_p3;
-	uint16_t par_p4;
-	uint16_t par_p5;
-	uint8_t  par_p6;
-	uint8_t  par_p7;
-	uint16_t par_p8;
-	uint16_t par_p9;
+	int16_t par_p2;
+	int8_t  par_p3;
+	int16_t par_p4;
+	int16_t par_p5;
+	int8_t  par_p6;
+	int8_t  par_p7;
+	int16_t par_p8;
+	int16_t par_p9;
 	uint8_t  par_p10;
 	/* humidity */
 	uint16_t par_h1;
 	uint16_t par_h2;
-	uint8_t  par_h3;
-	uint8_t  par_h4;
-	uint8_t  par_h5;
+	int8_t  par_h3;
+	int8_t  par_h4;
+	int8_t  par_h5;
 	uint8_t  par_h6;
-	uint8_t  par_h7;
+	int8_t  par_h7;
 	/* gas */
-	uint8_t  par_g1;
-	uint16_t par_g2;
-	uint8_t  par_g3;
+	int8_t  par_g1;
+	int16_t par_g2;
+	int8_t  par_g3;
+
+	int8_t range_sw_err;
+	
 } BME680_CalibrationTypeDef;
 
 /* BME680_HandleTypeDef: Device Context.
