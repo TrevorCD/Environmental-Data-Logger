@@ -180,7 +180,7 @@ static uint8_t i32toa(uint32_t num, uint8_t *buf)
 	return len;
 }
 
-/* Writes "time (ms), hum, temp, press, gas_r\n" to SD Card in CSV format */
+/* Writes "time, hum, temp, press, gas_r\n" to SD Card in CSV format */
 static int lWriteOutput(BME680_OutputTypeDef *data, FIL *fil)
 {
 	UINT bytesWritten;
@@ -188,7 +188,8 @@ static int lWriteOutput(BME680_OutputTypeDef *data, FIL *fil)
 	uint8_t len;
 	FRESULT fres;
 
-	len = i32toa(data->time_stamp, buf);
+	/* divide time_stamp by 1000 to get seconds instead of milliseconds */
+	len = i32toa((data->time_stamp) / 1000, buf);
 	buf[len] = ',';
 	fres = f_write(fil, buf, len+1, &bytesWritten);
 	if(fres != FR_OK)

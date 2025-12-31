@@ -1,3 +1,4 @@
+#include "config.h"
 #include <stdlib.h>
 //#include <stdio.h> /* ONLY printf! */
 
@@ -30,6 +31,7 @@ void vStartBME680PollTask( UBaseType_t uxPriority )
 static portTASK_FUNCTION( vBME680PollTask, pvParameters )
 {
 	BaseType_t xStatus;
+	TickType_t delay = pdMS_TO_TICKS(configBME680_POLL_INTERVAL);
 	
 	BME680_Init(&hbme);
 	
@@ -50,6 +52,6 @@ static portTASK_FUNCTION( vBME680PollTask, pvParameters )
 			
 		}
 			
-		vTaskDelay(pdMS_TO_TICKS(1000));   // delay 1000 ms
+		vTaskDelay(delay);
     }
 }
