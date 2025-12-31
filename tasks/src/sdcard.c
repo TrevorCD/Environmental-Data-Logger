@@ -3,6 +3,8 @@
 #include "queue.h"
 #include "sdcard.h"
 
+#include "config.h"
+
 /* Hardware Includes */
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_spi.h"
@@ -107,7 +109,7 @@ static portTASK_FUNCTION(vSDCardWriteTask, pvParameters)
 	/* Successfully mounted! */
         
 	/* Create/open a file for writing, with write pointer set to EOF position */
-	if(f_open(&fil, "data.csv", FA_OPEN_APPEND | FA_WRITE) != FR_OK)
+	if(f_open(&fil, configSD_FILE_NAME, FA_OPEN_APPEND | FA_WRITE) != FR_OK)
 	{
 		/* Not sure what would be wrong */
 		Error_Handler();
