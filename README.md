@@ -88,7 +88,7 @@ Vendor-provided abstraction layer for STM32 Boards
 </div>
 
 ##  FreeRTOS Task Layout:
-- **BME680 Poll Task***
+- **BME680 Poll Task**
   - Initializes BME680
   - Loop:
     - Poll BME680
