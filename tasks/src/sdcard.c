@@ -180,14 +180,21 @@ static uint8_t i32toa(uint32_t num, uint8_t *buf)
 	return len;
 }
 
-/* Writes "hum, temp, press, gas_r\n" to SD Card in CSV format */
+/* Writes "time (ms), hum, temp, press, gas_r\n" to SD Card in CSV format */
 static int lWriteOutput(BME680_OutputTypeDef *data, FIL *fil)
 {
 	UINT bytesWritten;
 	uint8_t buf[12] = {0}; /* MAX_INT32 is 10 characters long */
 	uint8_t len;
 	FRESULT fres;
-	
+
+	len = i32toa(data->time_stamp, buf);
+	buf[len] = ',';
+	fres = f_write(fil, buf, len+1, &bytesWritten);
+	if(fres != FR_OK)
+	{
+		return -1;
+	}
 	len = i32toa(data->humidity, buf);
 	buf[len] = ',';
 	fres = f_write(fil, buf, len+1, &bytesWritten);

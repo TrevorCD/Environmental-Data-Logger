@@ -39,6 +39,8 @@ static portTASK_FUNCTION( vBME680PollTask, pvParameters )
 		{
 			for(;;) {}
 		}
+		/* Time stamp data */
+		hbme.output.time_stamp = xTaskGetTickCount();
 		/* Send data to queue */
 		xStatus = xQueueSend(queue, &hbme.output, 0);
             

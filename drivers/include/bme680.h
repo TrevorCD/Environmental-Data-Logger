@@ -32,6 +32,9 @@ typedef struct {
 	int32_t temperature;
 	int32_t pressure;
 	int32_t gas_resistance;
+	/* timestamp in milliseconds. Not set by any BME680 driver functions.
+	   May be set by calling function if timestamping is desired. */
+	uint32_t time_stamp;
 } BME680_OutputTypeDef;
 
 typedef struct {
@@ -72,7 +75,7 @@ typedef struct {
 typedef struct {
 	/* I2C Handle must be initialized prior to device initialization */
 	I2C_HandleTypeDef *hi2c;
-	
+
 	/* temperature values for BME680_Calc_Res_Heat */
 	int32_t amb_temp;
 	int32_t old_amb_temp;
