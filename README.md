@@ -5,11 +5,12 @@ This project implements a real-time environmental data logger using an STM32 Nuc
 
 ## Overview
 
-### Key Features
-- **Interrupt-Driven Design:** The BME680’s data-ready interrupt triggers a FreeRTOS task to read sensor values over I²C.
-- **Data Logging:** Sensor readings are passed via FreeRTOS queues to a dedicated task that writes timestamped CSV entries to the microSD card using SPI.
-- **Separation of Concerns:** Device driver, SD card interface, and RTOS tasks are cleanly separated.
-- **UART Monitoring:** Optional task to send sensor readings over USB for debugging and analysis.
+This system records humidity, temperature, air pressure, and gas resistance from
+the BME680, on a configurable interval, and writes the data to a micro sd card
+in this CSV format:
+
+time (milliseconds), humidity (% * 100,000), temperature (centigrade),
+pressure (pascals), gas resistance (ohms)
 
 ## Hardware Components
 ### NUCLEO-64 STM32F446RE EVAL BRD
@@ -80,24 +81,14 @@ Vendor-provided abstraction layer for STM32 Boards
 </div>
 
 ##  FreeRTOS Task Layout:
-- **Environmental Sensor Task**
-  - Waits on a binary semaphore that is given by the ISR when new data is ready
-  - Reads sensor via I²C when semaphore is given
-  - Push data onto queue
-- **Data Logger Task**
-  - Waits on a queue of sensor readings from the sensor task
-  - Pops data off queue
-  - Write data to the SD card
-  - Push data onto queue 2
-- **Interrupt Handler**
-  - Triggered by sensor’s “data ready” pin
-  - Gives the semaphore to the sensor task
-- **Serial Comm Task**
-  - Waits on queue 2 of sensor readings from the data logger task
-  - Pops data off queue 2
-  - Print readings to serial console for debugging
-  - Triggered by Data Logger Task when data popped off queue
-
-Functions not yet assigned to tasks:
-- Changing sleep mode
-- 
+- **BME680 Poll Task***
+  - Initializes BME680
+  - Loop:
+    - Poll BME680
+	- Collect timestamp
+	- Send output data to queue
+- **SD Card Write Task**
+  - Initializes SD Card
+    - Loop:
+	  - Waits on queue for output data
+	  - Writes output data to SD Card
