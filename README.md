@@ -96,6 +96,6 @@ Vendor-provided abstraction layer for STM32 Boards
 	- Send output data to queue
 - **SD Card Write Task**
   - Initializes SD Card
-    - Loop:
-	  - Waits on queue for output data
-	  - Writes output data to SD Card
+  - Loop:
+	- Waits on queue for output data
+	- Writes output data to SD Card
