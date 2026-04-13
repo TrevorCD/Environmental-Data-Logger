@@ -1,0 +1,3 @@
+[submodule "BME680-STM32-Device-Driver/"]
+	path = drivers/BME680-STM32-Device-Driver
+	url = git@github.com:TrevorCD/BME680-STM32-Device-Driver.git

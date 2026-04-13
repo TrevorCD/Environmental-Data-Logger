@@ -120,8 +120,8 @@ CFLAGS += -I$(KERNEL_DIR)/include \
 #       BME680 Device Driver       #
 #==================================#
 
-SRCS += drivers/src/bme680.c
-CFLAGS += -I./drivers/include/
+SRCS += drivers/BME680-STM32-Device-Driver/bme680.c
+CFLAGS += -I./drivers/BME680-STM32-Device-Driver 
 
 #==================================#
 #            Task Files            #
